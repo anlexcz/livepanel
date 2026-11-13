@@ -1,17 +1,8 @@
 import { useMemo, useState } from 'react';
 import { CalendarDays, Download, FileJson, Search } from 'lucide-react';
 import { Buttons, DemoNotice, Empty, Field, PageHeading, PanelButton, Surface } from '../components/Ui';
+import { sampleArchive, type ArchiveItem } from '../mock/archive';
 
-type ArchiveItem = { id: string; date: string; source: string; kind: 'Komentář' | 'Super Chat' | 'Členství'; author: string; content: string };
-const samples: ArchiveItem[] = [
-  { id:'a01',date:'2026-11-10T18:01:00',source:'Nový grafikon se blíží',kind:'Komentář',author:'Petr Novotný',content:'Zdravím všechny ve studiu!' },
-  { id:'a02',date:'2026-11-10T18:02:00',source:'Nový grafikon se blíží',kind:'Komentář',author:'Dopravní nadšenec',content:'Budete řešit i změny v prosincovém grafikonu?' },
-  { id:'a03',date:'2026-11-10T18:07:00',source:'Nový grafikon se blíží',kind:'Super Chat',author:'Dopravák',content:'Díky za přenos – 100 Kč' },
-  { id:'a04',date:'2026-11-10T18:12:00',source:'Nový grafikon se blíží',kind:'Členství',author:'Martina',content:'Nové členství' },
-  { id:'a05',date:'2026-11-10T19:14:00',source:'Nový grafikon se blíží',kind:'Komentář',author:'Honza Š.',content:'A co nová tramvaj 52T?' },
-  { id:'a06',date:'2026-11-08T18:30:00',source:'Nedělní dopravní pokec',kind:'Komentář',author:'Lucie',content:'Díky za zpracování tématu.' },
-  { id:'a07',date:'2026-11-08T18:40:00',source:'Nedělní dopravní pokec',kind:'Komentář',author:'Metrofan',content:'Pozdrav ze Smíchova.' },
-];
 function safeCsv(value: string) { const clean = /^[=+\-@\t\r]/.test(value) ? "'" + value : value; return '"' + clean.replace(/"/g,'""') + '"'; }
 function downloadRows(rows: ArchiveItem[], format: 'csv'|'json') {
   const text = format === 'json' ? JSON.stringify(rows,null,2) : ['date,source,kind,author,content',...rows.map(r=>[r.date,r.source,r.kind,r.author,r.content].map(safeCsv).join(','))].join('\r\n');
@@ -22,7 +13,7 @@ function downloadRows(rows: ArchiveItem[], format: 'csv'|'json') {
 }
 export default function ArchivePage() {
   const [from,setFrom]=useState('2026-11-08'),[to,setTo]=useState('2026-11-11'),[query,setQuery]=useState(''),[kind,setKind]=useState('all');
-  const rows=useMemo(()=>samples.filter(r=>{
+  const rows=useMemo(()=>sampleArchive.filter(r=>{
     const day=r.date.slice(0,10);
     return (!from||day>=from)&&(!to||day<=to)&&(kind==='all'||kind===r.kind)&&(!query||[r.author,r.content,r.source].join(' ').toLocaleLowerCase('cs').includes(query.toLocaleLowerCase('cs')));
   }).sort((a,b)=>b.date.localeCompare(a.date)),[from,to,query,kind]);
