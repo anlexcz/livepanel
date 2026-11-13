@@ -18,38 +18,98 @@ function Directing() {
   const [chatPaused, setChatPaused] = useState(false);
   const [chatVisible, setChatVisible] = useState(true);
   const [activeFeatured, setActiveFeatured] = useState<string | null>(null);
-  const [directingWidth, setDirectingWidth] = useState(60);
-  const workArea = useRef<HTMLDivElement>(null);
-  const [resizing, setResizing] = useState(false);
-  useEffect(() => {
-    if (!resizing) return;
-    const resize = (event: PointerEvent) => {
-      const rect = workArea.current?.getBoundingClientRect();
-      if (!rect || rect.width <= 0) return;
-      const percent = ((event.clientX - rect.left) / rect.width) * 100;
-      setDirectingWidth(Math.max(30, Math.min(70, Math.round(percent))));
+  type LayoutPreference = 'auto' | 'two' | 'three';
+  type ResizeTarget = 'two' | 'first' | 'second';
+  const [wide,setWide]=useState(()=>window.matchMedia('(min-width: 1380px)').matches);
+  const [layoutPreference,setLayoutPreference]=useState<LayoutPreference>(()=>{
+    const value=window.localStorage.getItem('livepanel:layout-mode');
+    return value==='two'||value==='three'?value:'auto';
+  });
+  const [directingWidth,setDirectingWidth]=useState(()=>{
+    const value=Number(window.localStorage.getItem('livepanel:two-width'));
+    return value>=30&&value<=70?value:60;
+  });
+  const [threeWidths,setThreeWidths]=useState(()=>{
+    const raw=window.localStorage.getItem('livepanel:three-widths');
+    try {
+      const value=JSON.parse(raw||'null') as {left:number;middle:number}|null;
+      if(value && value.left>=20 && value.middle>=20 && value.left+value.middle<=70)return value;
+    } catch { /* preference not available */ }
+    return {left:25,middle:35};
+  });
+  const isThree=wide&&layoutPreference!=='two';
+  const workArea=useRef<HTMLDivElement>(null);
+  const [resizing,setResizing]=useState<ResizeTarget|null>(null);
+  useEffect(()=>{
+    const query=window.matchMedia('(min-width: 1380px)');
+    const update=()=>setWide(query.matches);
+    query.addEventListener('change',update);
+    return ()=>query.removeEventListener('change',update);
+  },[]);
+  useEffect(()=>{window.localStorage.setItem('livepanel:layout-mode',layoutPreference);},[layoutPreference]);
+  useEffect(()=>{window.localStorage.setItem('livepanel:two-width',String(directingWidth));},[directingWidth]);
+  useEffect(()=>{window.localStorage.setItem('livepanel:three-widths',JSON.stringify(threeWidths));},[threeWidths]);
+  const updateResize=(target:ResizeTarget,raw:number,width:number)=>{
+    if(target==='two'){
+      const minimum=Math.max(30,Math.min(42,330/width*100));
+      setDirectingWidth(Math.round(Math.max(minimum,Math.min(100-minimum,raw))));
+      return;
+    }
+    const minLeft=235/width*100,minMid=285/width*100,minChat=330/width*100;
+    setThreeWidths(previous=>{
+      if(target==='first'){
+        const boundary=previous.left+previous.middle;
+        const left=Math.round(Math.max(minLeft,Math.min(boundary-minMid,raw))*10)/10;
+        return {...previous,left,middle:Math.round((boundary-left)*10)/10};
+      }
+      const boundary=Math.max(previous.left+minMid,Math.min(100-minChat,raw));
+      return {...previous,middle:Math.round((boundary-previous.left)*10)/10};
+    });
+  };
+  useEffect(()=>{
+    if(!resizing)return;
+    const move=(event:PointerEvent)=>{
+      const rect=workArea.current?.getBoundingClientRect();
+      if(!rect||rect.width<1)return;
+      updateResize(resizing,((event.clientX-rect.left)/rect.width)*100,rect.width);
     };
-    const stop = () => setResizing(false);
-    window.addEventListener('pointermove', resize);
-    window.addEventListener('pointerup', stop);
-    window.addEventListener('pointercancel', stop);
-    return () => {
-      window.removeEventListener('pointermove', resize);
-      window.removeEventListener('pointerup', stop);
-      window.removeEventListener('pointercancel', stop);
+    const done=()=>setResizing(null);
+    window.addEventListener('pointermove',move);
+    window.addEventListener('pointerup',done);
+    window.addEventListener('pointercancel',done);
+    return ()=>{
+      window.removeEventListener('pointermove',move);
+      window.removeEventListener('pointerup',done);
+      window.removeEventListener('pointercancel',done);
     };
-  }, [resizing]);
+  },[resizing]);
+  function resetWidths(){setDirectingWidth(60);setThreeWidths({left:25,middle:35});}
+  function keyResize(event:React.KeyboardEvent<HTMLDivElement>,target:ResizeTarget){
+    if(event.key==='Home'){event.preventDefault();resetWidths();return;}
+    if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;
+    const rect=workArea.current?.getBoundingClientRect();if(!rect)return;
+    event.preventDefault();
+    const delta=event.key==='ArrowLeft'?-2:2;
+    const value=target==='two'?directingWidth:target==='first'?threeWidths.left:threeWidths.left+threeWidths.middle;
+    updateResize(target,value+delta,rect.width);
+  }
   const chatScroll = useRef<HTMLDivElement>(null);
   const filtered = useMemo(() => messages.filter(m => filter === 'all' || m.favorite), [messages, filter]);
   const favorites = messages.filter(m => m.favorite);
   function toggleFavorite(id: string) { setMessages(previous => previous.map(m => m.id === id ? { ...m, favorite: !m.favorite } : m)); }
   function addDemoMessage() { const next = messages.length + 1; setMessages(previous => [...previous, { id: 'm' + next, author: 'Testovací divák', text: 'Nová ukázková zpráva číslo ' + next + '. Pouze test, bez YouTube API.', time: '19:' + String(next).padStart(2, '0'), favorite: false }]); requestAnimationFrame(() => { if (chatScroll.current) chatScroll.current.scrollTop = chatScroll.current.scrollHeight; }); }
-  return <div className="live-view" style={{ '--directing-width': directingWidth + '%' } as CSSProperties}>
+  return <div className="live-view" style={{'--directing-width':directingWidth+'%','--first-width':threeWidths.left+'%','--middle-width':threeWidths.middle+'%'} as CSSProperties}>
     <div className="demo-banner"><span><AlertTriangle size={16}/> DEMO REŽIM – žádné spojení s YouTube ani OBS. Všechny akce jsou jen lokální simulace.</span><button onClick={addDemoMessage} className="small-button">+ Testovací zpráva</button></div>
-    <div className="page-toolbar"><h1>Živá režie</h1><span className="muted">Ukázkové vysílání · simulace</span></div>
+    <div className="page-toolbar"><h1>Živá režie</h1><span className="muted">Ukázkové vysílání · simulace</span>
+      <div className="layout-switch" role="group" aria-label="Rozložení hlavní režie">
+        <button type="button" aria-pressed={!isThree} className={!isThree?'selected':''} onClick={()=>setLayoutPreference('two')}>2 sloupce</button>
+        <button type="button" aria-pressed={isThree} className={isThree?'selected':''} disabled={!wide} title={!wide?'Tři sloupce jsou dostupné na široké obrazovce':undefined} onClick={()=>setLayoutPreference('three')}>3 sloupce</button>
+      </div>
+    </div>
     <div className="mobile-tabs" role="tablist" aria-label="Část režie"><button role="tab" aria-selected={mobilePage === 'chat'} className={mobilePage === 'chat' ? 'selected' : ''} onClick={() => setMobilePage('chat')}>CHAT</button><button role="tab" aria-selected={mobilePage === 'directing'} className={mobilePage === 'directing' ? 'selected' : ''} onClick={() => setMobilePage('directing')}>REŽIE</button></div>
-    <div className={'work-area' + (resizing ? ' is-resizing' : '')} ref={workArea}>
-      <div className="column-resizer" role="separator" aria-label="Šířka režijního sloupce" aria-orientation="vertical" aria-valuemin={30} aria-valuemax={70} aria-valuenow={directingWidth} aria-valuetext={`Režie ${directingWidth} %, chat ${100 - directingWidth} %`} tabIndex={0} title="Tažením změnit šířku · dvojklik obnoví 60:40" onPointerDown={event => { if (event.button !== 0) return; event.preventDefault(); setResizing(true); }} onDoubleClick={() => setDirectingWidth(60)} onKeyDown={event => { if (event.key === 'ArrowLeft') { event.preventDefault(); setDirectingWidth(width => Math.max(30, width - 2)); } if (event.key === 'ArrowRight') { event.preventDefault(); setDirectingWidth(width => Math.min(70, width + 2)); } if (event.key === 'Home') { event.preventDefault(); setDirectingWidth(30); } if (event.key === 'End') { event.preventDefault(); setDirectingWidth(70); } }}><span className="resize-grip" /></div>
+    <div className={'work-area '+(isThree?'mode-three':'mode-two')+(resizing?' is-resizing':'')} ref={workArea}>
+      <div className="column-resizer resizer-first" role="separator" aria-label={isThree?'Šířka levého sloupce':'Šířka režijního sloupce'} aria-orientation="vertical" aria-valuemin={20} aria-valuemax={70} aria-valuenow={isThree?threeWidths.left:directingWidth} tabIndex={0} title="Tažením změnit šířku · dvojklik obnoví výchozí poměr" onPointerDown={event=>{if(event.button!==0)return;event.preventDefault();setResizing(isThree?'first':'two');}} onDoubleClick={resetWidths} onKeyDown={event=>keyResize(event,isThree?'first':'two')}><span className="resize-grip"/></div>
+      {isThree&&<div className="column-resizer resizer-second" role="separator" aria-label="Šířka středního sloupce a chatu" aria-orientation="vertical" aria-valuemin={20} aria-valuemax={80} aria-valuenow={threeWidths.left+threeWidths.middle} tabIndex={0} title="Tažením změnit šířku · dvojklik obnoví 25/35/40" onPointerDown={event=>{if(event.button!==0)return;event.preventDefault();setResizing('second');}} onDoubleClick={resetWidths} onKeyDown={event=>keyResize(event,'second')}><span className="resize-grip"/></div>}
       <section className={'panel chat-panel ' + (mobilePage !== 'chat' ? 'mobile-hidden' : '')} aria-label="Živý chat"><div className="chat-head"><h2><MessageSquare size={19}/> CHAT</h2><div className="toolbar-actions"><button title={chatPaused ? 'Pokračovat' : 'Pozastavit'} aria-label={chatPaused ? 'Pokračovat' : 'Pozastavit'} className="icon-button" onClick={() => setChatPaused(!chatPaused)}>{chatPaused ? <Play size={17}/> : <Pause size={17}/>}</button><button title="Vyčistit grafiku – simulace" aria-label="Vyčistit grafiku – simulace" className="icon-button" disabled><Trash2 size={17}/></button><button title={chatVisible ? 'Skrýt CHAT v grafice – simulace' : 'Zobrazit CHAT v grafice – simulace'} aria-label="Přepnout viditelnost chatu" className="icon-button" onClick={() => setChatVisible(!chatVisible)}>{chatVisible ? <Eye size={17}/> : <EyeOff size={17}/>}</button></div></div>
       <div className="chat-state"><span className={'state-dot ' + (chatVisible && !chatPaused ? 'ok' : 'warn')}/>{!chatVisible ? 'Grafika CHAT skryta (demo)' : chatPaused ? 'Grafika CHAT pozastavena (demo)' : 'Automatika CHAT aktivní (demo)'}</div>
       <div className="filter-row"><button className={filter === 'all' ? 'selected' : ''} onClick={() => setFilter('all')}>Vše ({messages.length})</button><button className={filter === 'favorites' ? 'selected' : ''} onClick={() => setFilter('favorites')}>Oblíbené ({favorites.length})</button></div>
