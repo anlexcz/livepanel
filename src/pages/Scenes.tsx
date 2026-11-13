@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Pause, Play, RotateCcw, Save, SkipForward } from 'lucide-react';
 import { Buttons, DemoNotice, Field, PageHeading, PanelButton, Surface, UnsavedBar } from '../components/Ui';
 import { useNavigationGuard } from '../components/Shell';
@@ -54,7 +54,8 @@ function SceneEditor({ kind }: { kind: SceneKind }) {
   return <div className="lp-page lp-scene-page">
     <PageHeading title={labels[kind]} description={'Scénický editor · pouze testovací náhled, bez spojení s OBS'} actions={<span className="lp-version-tag">UI PROTOTYP</span>} />
     <DemoNotice>Konfigurace a přehrávání jsou pouze lokální simulace. Náhled není skutečný OBS Browser Source a nezahrnuje produkční hudbu ani animaci.</DemoNotice>
-    <div className="lp-scene-columns">
+    <div className="lp-scene-columns" ref={layoutRef} style={{'--scene-form-width':formWidth+'%'} as React.CSSProperties}>
+      <div className="column-resizer lp-scene-resizer" role="separator" tabIndex={0} aria-label="Šířka formuláře scénického editoru" aria-orientation="vertical" aria-valuemin={30} aria-valuemax={70} aria-valuenow={formWidth} title="Tažením upravit poměr; dvojklik obnoví 40:60" onPointerDown={e=>{if(e.button!==0)return;e.preventDefault();setResizing(true);}} onDoubleClick={()=>setFormWidth(40)} onKeyDown={e=>{if(e.key==='ArrowLeft'){e.preventDefault();setFormWidth(x=>Math.max(30,x-2));}if(e.key==='ArrowRight'){e.preventDefault();setFormWidth(x=>Math.min(70,x+2));}}}><span className="resize-grip"/></div>
       <div className="lp-scene-form">
         <Surface title="Nastavení" subtitle={kind === 'intro' ? 'Univerzální úvodní scéna' : isBreak ? 'Přestávková obrazovka' : 'Závěrečné šablony'}>
           {dirty && <p className="lp-dirty-inline"><span/> Neuložené změny</p>}
