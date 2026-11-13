@@ -2,17 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Pause, Play, RotateCcw, Save, SkipForward } from 'lucide-react';
 import { Buttons, DemoNotice, Field, PageHeading, PanelButton, Surface, UnsavedBar } from '../components/Ui';
 import { useNavigationGuard } from '../components/Shell';
+import { initialScenes, type SceneSettings, type SceneKind } from '../mock/scenes';
 
-export type SceneKind = 'intro' | 'break' | 'outro';
-type SceneSettings = {
-  title: string; detail: string; background: 'dark' | 'light'; countdown: 'off' | 'length' | 'until';
-  minutes: string; until: string; ending: string; template: string; presenter: string; social: string;
-};
-const initial: Record<SceneKind, SceneSettings> = {
-  intro: { title: '', detail: '', background: 'dark', countdown: 'off', minutes: '5', until: '21:00', ending: '', template: '', presenter: '', social: '' },
-  break: { title: 'Přestávka', detail: 'Za chvíli jsme zpět.', background: 'dark', countdown: 'off', minutes: '5', until: '21:00', ending: 'Za chvíli pokračujeme', template: '', presenter: '', social: '' },
-  outro: { title: 'Děkujeme za sledování', detail: '', background: 'dark', countdown: 'off', minutes: '5', until: '21:00', ending: '', template: 'pokec', presenter: 'Honza Škopek', social: '@metrobuscz' },
-};
 const labels: Record<SceneKind, string> = { intro: 'INTRO', break: 'BREAK', outro: 'OUTRO' };
 function DisplayPreview({ kind, data, background, playing, finished }: { kind: SceneKind; data: SceneSettings; background: string; playing: boolean; finished: boolean }) {
   return <div className={'lp-preview lp-preview-' + background} aria-label="Lokální náhled scény (ilustrační)">
@@ -26,9 +17,9 @@ function DisplayPreview({ kind, data, background, playing, finished }: { kind: S
   </div>;
 }
 function SceneEditor({ kind }: { kind: SceneKind }) {
-  const [saved, setSaved] = useState<SceneSettings>(initial[kind]);
-  const [draft, setDraft] = useState<SceneSettings>(initial[kind]);
-  const [preview, setPreview] = useState<SceneSettings>(initial[kind]);
+  const [saved, setSaved] = useState<SceneSettings>(initialScenes[kind]);
+  const [draft, setDraft] = useState<SceneSettings>(initialScenes[kind]);
+  const [preview, setPreview] = useState<SceneSettings>(initialScenes[kind]);
   const [previewBg, setPreviewBg] = useState('dark');
   const [playing, setPlaying] = useState(false);
   const [finished, setFinished] = useState(false);
