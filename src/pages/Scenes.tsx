@@ -26,9 +26,34 @@ function SceneEditor({ kind }: { kind: SceneKind }) {
   const [timeline, setTimeline] = useState(0);
   const [activeTemplate, setActiveTemplate] = useState('pokec');
   const [notice, setNotice] = useState('');
+  const layoutRef=useRef<HTMLDivElement>(null);
+  const [resizing,setResizing]=useState(false);
+  const [formWidth,setFormWidth]=useState(()=>{
+    const stored=Number(window.localStorage.getItem('livepanel:scene-form-width'));
+    return stored>=30 && stored<=70 ? stored : 40;
+  });
+  useEffect(()=>{window.localStorage.setItem('livepanel:scene-form-width',String(formWidth));},[formWidth]);
+  useEffect(()=>{
+    if(!resizing)return;
+    const move=(event:PointerEvent)=>{
+      const rect=layoutRef.current?.getBoundingClientRect();
+      if(!rect||rect.width<1)return;
+      setFormWidth(Math.max(30,Math.min(70,Math.round(((event.clientX-rect.left)/rect.width)*100))));
+    };
+    const done=()=>setResizing(false);
+    window.addEventListener('pointermove',move);
+    window.addEventListener('pointerup',done);
+    window.addEventListener('pointercancel',done);
+    return ()=>{
+      window.removeEventListener('pointermove',move);
+      window.removeEventListener('pointerup',done);
+      window.removeEventListener('pointercancel',done);
+    };
+  },[resizing]);
+
   const dirty = useMemo(() => JSON.stringify(saved) !== JSON.stringify(draft), [saved, draft]);
   function save() { setSaved({...draft}); setPreview({...draft}); setNotice('Konfigurace byla uložena pouze v tomto prohlížeči (demo).'); }
-  function discard() { setDraft({...saved}); setPreview({...saved}); setNotice('Rozpracované změny byly zahozena (demo).'); }
+  function discard() { setDraft({...saved}); setPreview({...saved}); setNotice('Rozpracované změny byly zahozeny (demo).'); }
   useNavigationGuard(dirty, save, discard);
   useEffect(() => {
     if (!dirty) return;
