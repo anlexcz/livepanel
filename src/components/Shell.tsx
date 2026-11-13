@@ -67,7 +67,7 @@ export default function Shell({ children }: { children: (section: Section) => Re
     </nav>
     <header className="topbar">
       <button className="mobile-menu icon-button" aria-label="Otevřít navigaci" onClick={()=>setOpen(true)}><Menu size={22}/></button>
-      <span className="brand"><img className="brand-logo" src="/livepanel/assets/metrobus-mark-white.png" alt="Metrobus"/><span className="brand-title"><span className="brand-live">LIVE</span><span className="brand-panel">PANEL</span></span></span>
+      <span className="brand"><span className="brand-mark"><img className="brand-logo" src="/livepanel/assets/metrobus-mark-white.png" alt="Metrobus"/></span><span className="brand-title"><span className="brand-live">LIVE</span><span className="brand-panel">PANEL</span></span></span>
       <span className="top-spacer"/>
       <div className="status-strip" aria-label="Ukázkové provozní stavy">
         <span title="Relace: demo"><Radio size={16} className="state-ok"/><span>DEMO</span></span>
