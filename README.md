@@ -15,7 +15,9 @@ Sestavení: `npm run build`; náhled sestavení: `npm run preview`.
 
 ## Stav vývoje
 
-Etapa 01: tmavá administrace, navigace, stavová lišta, 60:40 Live Directing UI, mobilní CHAT/REŽIE, čtyři sbalitelné panely. Dílčí interakce používají pouze lokální mock stav; neaktivní ovladače jsou označeny jako neimplementované. Žádný backend ani produkční časovače.
+Vizuální UI prototyp: tmavá administrace, navigace, stavová lišta a živá režie REŽIE 60 % vlevo / CHAT 40 % vpravo, včetně tažení hranice a mobilního přepínání. FEATURED, EVENT, TICKER a EDITORIAL mají testovací ovládání, knihovny a fronty. Samostatné stránky INTRO, BREAK a OUTRO nabízejí editor a testovací náhled; archiv umělých komentářů podporuje datumové filtry a export ukázkových CSV/JSON; diagnostika a nastavení mají interaktivní demonstrační obrazovky. Prototyp neslouží k řízení skutečné produkce.
+
+Lokální demo změny se mohou při obnovení stránky ztratit; výjimkou je poměr sloupců scénických editorů uložený v místním prohlížeči. Scénické náhledy nemají skutečné animace ani zvuk, přehrávací ovladače pouze ilustrují UX. Žádný backend ani produkční časovače.
 
 Vzhled vychází z dokumentu „Metrobus LivePanel – UI/UX Design a chování“ (13. 11. 2026). Fonty Audiowide, Montserrat a Inter se při instalaci přibalí lokálně prostřednictvím @fontsource. Používáme Lucide ikony. Mock data jsou v `src/mock/`.
 
