@@ -48,12 +48,16 @@ export default function Shell({ children }: { children: (section: Section) => Re
     window.addEventListener('keydown',key);
     return ()=>window.removeEventListener('keydown',key);
   },[pending]);
-  return <GuardContext.Provider value={{register}}><div className="app-shell">
+  return <GuardContext.Provider value={{register}}><div className={"app-shell "+(open?"nav-expanded":"")}>
     <aside className="nav-rail" aria-label="Hlavní navigace">
-      <button className="rail-button" type="button" title="Otevřít navigaci" aria-label="Otevřít navigaci" onClick={()=>setOpen(true)}><Menu size={23}/></button>
+      <button className="rail-toggle" type="button" title={open?'Zavřít navigaci':'Otevřít navigaci'} aria-label={open?'Zavřít navigaci':'Otevřít navigaci'} aria-expanded={open} onClick={()=>setOpen(value=>!value)}>{open?<X size={23}/>:<Menu size={23}/>}<span className="rail-label rail-title">NAVIGACE</span></button>
       <span className="rail-divider"/>
-      {sections.filter(item=>!['intro','break','outro'].includes(item.id)).map(item=>
-        <button key={item.id} className={'rail-button '+(section===item.id?'active':'')} type="button" title={item.name} aria-label={item.name} onClick={()=>navigate(item.id)}><item.icon size={22}/></button>)}
+      <div className="rail-links">
+        {sections.map(item=><div key={item.id}>
+          {item.group&&<div className="rail-group"><span className="rail-label">{item.group}</span></div>}
+          <button className={'rail-link '+(section===item.id?'active':'')} type="button" title={item.name} aria-label={item.name} onClick={()=>navigate(item.id)}><item.icon size={21}/><span className="rail-label">{item.name}</span></button>
+        </div>)}
+      </div>
     </aside>
     <button className={'nav-backdrop '+(open?'is-open':'')} type="button" aria-label="Zavřít navigaci" aria-hidden={!open} tabIndex={open?0:-1} onClick={()=>setOpen(false)}/>
     <nav className={'nav-drawer '+(open?'is-open':'')} aria-label="Navigace" aria-hidden={!open} inert={!open}>
@@ -63,7 +67,7 @@ export default function Shell({ children }: { children: (section: Section) => Re
     </nav>
     <header className="topbar">
       <button className="mobile-menu icon-button" aria-label="Otevřít navigaci" onClick={()=>setOpen(true)}><Menu size={22}/></button>
-      <span className="brand"><img className="brand-logo" src="/livepanel/assets/metrobus-white.png" alt="Metrobus"/><span className="brand-title"><span className="brand-live">LIVE</span><span className="brand-panel">PANEL</span></span></span>
+      <span className="brand"><img className="brand-logo" src="/livepanel/assets/metrobus-mark-white.png" alt="Metrobus"/><span className="brand-title"><span className="brand-live">LIVE</span><span className="brand-panel">PANEL</span></span></span>
       <span className="top-spacer"/>
       <div className="status-strip" aria-label="Ukázkové provozní stavy">
         <span title="Relace: demo"><Radio size={16} className="state-ok"/><span>DEMO</span></span>
