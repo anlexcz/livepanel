@@ -196,3 +196,34 @@ body{background:var(--lp-bg)}
 @media(prefers-reduced-motion:reduce){
   .app-shell,.rail-group,.rail-label{transition:none}
 }
+
+/* Header refinement: navigation rail is one continuous full-height strip.
+   The topbar belongs only to the working area; the brand forms one visual unit. */
+.app-shell{grid-template-rows:64px minmax(0,1fr)}
+.nav-rail{grid-column:1;grid-row:1 / -1;align-self:stretch;border-right:1px solid #292929;background:#171717}
+.rail-toggle{height:64px;min-height:64px;padding:0 7px;gap:9px;border-bottom:1px solid #292929}
+.rail-toggle>svg{width:38px;height:23px}
+.rail-divider{display:none}
+.rail-links{padding-top:6px}
+.topbar{grid-column:2;grid-row:1;min-height:64px;height:64px;padding:0 16px;gap:12px;background:#171717;border-bottom:1px solid #292929}
+.main-content{grid-column:2;grid-row:2}
+.brand{display:inline-flex;align-items:center;gap:10px;flex:none;min-width:0;height:100%}
+.brand-mark{display:flex;align-items:center;justify-content:center;flex:none;width:42px;height:50px;overflow:hidden}
+.brand-logo{display:block;width:42px;height:42px;max-width:none;object-fit:contain;transform:scale(1.55);transform-origin:center}
+.brand-title{display:flex;align-items:center;gap:0;font:400 22px/1 Audiowide,Inter,sans-serif;letter-spacing:0}
+.brand-live{color:#87cefa}
+.brand-panel{color:#f5f5f5}
+@media(max-width:760px){
+  .nav-rail{display:none}
+  .topbar,.main-content{grid-column:1}
+  .topbar{padding:0 10px;gap:9px}
+  .brand{gap:7px}
+  .brand-mark{width:37px;height:42px}
+  .brand-logo{width:37px;height:37px;transform:scale(1.55)}
+  .brand-title{font-size:17px}
+}
+@media(max-width:430px){
+  .brand-mark{width:30px;height:36px}
+  .brand-logo{width:30px;height:30px;transform:scale(1.55)}
+  .brand-title{font-size:13px}
+}
