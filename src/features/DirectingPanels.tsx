@@ -5,7 +5,7 @@ import { initialEditorial, initialEvents, initialTicker, type EditorialItem, typ
 import type { Category, Message } from '../mock/data';
 
 type Props={
-  favorites:Message[]; featuredId:string|null; onFeature:(id:string|null)=>void;
+  messages:Message[]; favorites:Message[]; featuredId:string|null; onFeature:(id:string|null)=>void;
   collapsed:Record<Category,boolean>; toggle:(category:Category)=>void;
 };
 function Module({name,status,collapsed,onToggle,children}:{name:Category;status:string;collapsed:boolean;onToggle:()=>void;children:React.ReactNode}){
@@ -15,7 +15,7 @@ function Module({name,status,collapsed,onToggle,children}:{name:Category;status:
     {!collapsed&&<div className="panel-body">{children}</div>}
   </section>;
 }
-export default function DirectingPanels({favorites,featuredId,onFeature,collapsed,toggle}:Props){
+export default function DirectingPanels({messages,favorites,featuredId,onFeature,collapsed,toggle}:Props){
   const [events,setEvents]=useState<EventItem[]>(initialEvents);
   const [activeEvent,setActiveEvent]=useState<EventItem|null>(null);
   const [eventPaused,setEventPaused]=useState(false);
@@ -30,7 +30,7 @@ export default function DirectingPanels({favorites,featuredId,onFeature,collapse
   const [editorialEdit,setEditorialEdit]=useState<string|null>(null);
   const [editorialDraft,setEditorialDraft]=useState({heading:'',subheading:''});
   const [showEditorialLibrary,setShowEditorialLibrary]=useState(false);
-  const featured=favorites.find(m=>m.id===featuredId);
+  const featured=messages.find(m=>m.id===featuredId);
   function nextEvent(){
     if(eventPaused)return;
     setEvents(previous=>previous.slice(1));
