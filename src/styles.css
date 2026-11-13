@@ -227,3 +227,9 @@ body{background:var(--lp-bg)}
   .brand-logo{width:30px;height:30px;transform:scale(1.55)}
   .brand-title{font-size:13px}
 }
+
+/* Scene navigation: distinct, compact and readable without opening the rail */
+.scene-nav-mark{display:inline-flex;align-items:center;justify-content:center;flex:none;width:22px;height:22px;line-height:1;font:700 9px/1 Inter,Arial,sans-serif;letter-spacing:-.025em;color:#c5c5c5;background:#2a2a2a;border:1px solid #494949;border-radius:3px;user-select:none}
+.rail-link:hover .scene-nav-mark,.nav-link:hover .scene-nav-mark{color:#fff;border-color:#87cefa}
+.rail-link.active .scene-nav-mark,.nav-link.active .scene-nav-mark{background:#263a46;border-color:#87cefa;color:#87cefa}
+.nav-drawer .scene-nav-mark{margin-right:0}
