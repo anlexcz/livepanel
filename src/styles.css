@@ -123,3 +123,15 @@ body{background:var(--lp-bg)}
 @media(prefers-reduced-motion:reduce){
   .nav-drawer,.nav-backdrop{transition:none;animation:none}
 }
+
+/* Chat actions: permanently visible on the right without consuming another message row */
+.message{align-items:flex-start}
+.message-content{flex:1;min-width:0}
+.message-actions{display:flex;align-items:center;align-self:flex-start;flex:none;gap:2px;margin:0 0 0 auto;opacity:1}
+.message-actions button{width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex:none;padding:0;border:0;background:transparent;color:#8b8b8b;opacity:.56;transition:opacity 130ms ease,color 130ms ease,background-color 130ms ease}
+.message-actions button:hover,.message-actions button:focus-visible,.message:hover .message-actions button{opacity:1}
+.message-actions button:hover,.message-actions button:focus-visible{color:#87cefa;background:#252525}
+.message-actions button.is-active{color:#87cefa;opacity:1}
+.message-actions button.is-active:hover{background:#252525}
+@media(max-width:760px){.message-actions button{width:38px;height:38px;opacity:.72}}
+@media(prefers-reduced-motion:reduce){.message-actions button{transition:none}}
