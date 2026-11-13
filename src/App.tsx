@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Eye, EyeOff, Heart, MessageSquare, MoreHorizontal, Pause, Play, RotateCcw, Star, Trash2 } from 'lucide-react';
 import Shell from './components/Shell';
 import { initialMessages, type Category, type Message } from './mock/data';
@@ -18,18 +18,39 @@ function Directing() {
   const [chatVisible, setChatVisible] = useState(true);
   const [activeFeatured, setActiveFeatured] = useState<string | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
-  const [chatWidth, setChatWidth] = useState(60);
+  const [directingWidth, setDirectingWidth] = useState(60);
+  const workArea = useRef<HTMLDivElement>(null);
+  const [resizing, setResizing] = useState(false);
+  useEffect(() => {
+    if (!resizing) return;
+    const resize = (event: PointerEvent) => {
+      const rect = workArea.current?.getBoundingClientRect();
+      if (!rect || rect.width <= 0) return;
+      const percent = ((event.clientX - rect.left) / rect.width) * 100;
+      setDirectingWidth(Math.max(30, Math.min(70, Math.round(percent))));
+    };
+    const stop = () => setResizing(false);
+    window.addEventListener('pointermove', resize);
+    window.addEventListener('pointerup', stop);
+    window.addEventListener('pointercancel', stop);
+    return () => {
+      window.removeEventListener('pointermove', resize);
+      window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
+    };
+  }, [resizing]);
   const chatScroll = useRef<HTMLDivElement>(null);
   const filtered = useMemo(() => messages.filter(m => filter === 'all' || m.favorite), [messages, filter]);
   const favorites = messages.filter(m => m.favorite);
   function toggleFavorite(id: string) { setMessages(previous => previous.map(m => m.id === id ? { ...m, favorite: !m.favorite } : m)); }
   function addDemoMessage() { const next = messages.length + 1; setMessages(previous => [...previous, { id: 'm' + next, author: 'Testovací divák', text: 'Nová ukázková zpráva číslo ' + next + '. Pouze test, bez YouTube API.', time: '19:' + String(next).padStart(2, '0'), favorite: false }]); requestAnimationFrame(() => { if (chatScroll.current) chatScroll.current.scrollTop = chatScroll.current.scrollHeight; }); }
   const chosen = messages.find(m => m.id === activeFeatured);
-  return <div className="live-view" style={{ '--chat-width': chatWidth + '%' } as CSSProperties}>
+  return <div className="live-view" style={{ '--directing-width': directingWidth + '%' } as CSSProperties}>
     <div className="demo-banner"><span><AlertTriangle size={16}/> DEMO REŽIM – žádné spojení s YouTube ani OBS. Všechny akce jsou jen lokální simulace.</span><button onClick={addDemoMessage} className="small-button">+ Testovací zpráva</button></div>
-    <div className="page-toolbar"><h1>Živá režie</h1><span className="muted">Ukázkové vysílání · simulace</span><label className="width-setting">CHAT {chatWidth}% <input aria-label="Šířka chatu" type="range" min="45" max="70" value={chatWidth} onChange={e => setChatWidth(Number(e.target.value))}/></label></div>
+    <div className="page-toolbar"><h1>Živá režie</h1><span className="muted">Ukázkové vysílání · simulace</span></div>
     <div className="mobile-tabs" role="tablist" aria-label="Část režie"><button role="tab" aria-selected={mobilePage === 'chat'} className={mobilePage === 'chat' ? 'selected' : ''} onClick={() => setMobilePage('chat')}>CHAT</button><button role="tab" aria-selected={mobilePage === 'directing'} className={mobilePage === 'directing' ? 'selected' : ''} onClick={() => setMobilePage('directing')}>REŽIE</button></div>
-    <div className="work-area">
+    <div className={'work-area' + (resizing ? ' is-resizing' : '')} ref={workArea}>
+      <div className="column-resizer" role="separator" aria-label="Šířka režijního sloupce" aria-orientation="vertical" aria-valuemin={30} aria-valuemax={70} aria-valuenow={directingWidth} aria-valuetext={`Režie ${directingWidth} %, chat ${100 - directingWidth} %`} tabIndex={0} title="Tažením změnit šířku · dvojklik obnoví 60:40" onPointerDown={event => { if (event.button !== 0) return; event.preventDefault(); setResizing(true); }} onDoubleClick={() => setDirectingWidth(60)} onKeyDown={event => { if (event.key === 'ArrowLeft') { event.preventDefault(); setDirectingWidth(width => Math.max(30, width - 2)); } if (event.key === 'ArrowRight') { event.preventDefault(); setDirectingWidth(width => Math.min(70, width + 2)); } if (event.key === 'Home') { event.preventDefault(); setDirectingWidth(30); } if (event.key === 'End') { event.preventDefault(); setDirectingWidth(70); } }}><span className="resize-grip" /></div>
       <section className={'panel chat-panel ' + (mobilePage !== 'chat' ? 'mobile-hidden' : '')} aria-label="Živý chat"><div className="chat-head"><h2><MessageSquare size={19}/> CHAT</h2><div className="toolbar-actions"><button title={chatPaused ? 'Pokračovat' : 'Pozastavit'} aria-label={chatPaused ? 'Pokračovat' : 'Pozastavit'} className="icon-button" onClick={() => setChatPaused(!chatPaused)}>{chatPaused ? <Play size={17}/> : <Pause size={17}/>}</button><button title="Vyčistit grafiku – simulace" aria-label="Vyčistit grafiku – simulace" className="icon-button" disabled><Trash2 size={17}/></button><button title={chatVisible ? 'Skrýt CHAT v grafice – simulace' : 'Zobrazit CHAT v grafice – simulace'} aria-label="Přepnout viditelnost chatu" className="icon-button" onClick={() => setChatVisible(!chatVisible)}>{chatVisible ? <Eye size={17}/> : <EyeOff size={17}/>}</button></div></div>
       <div className="chat-state"><span className={'state-dot ' + (chatVisible && !chatPaused ? 'ok' : 'warn')}/>{!chatVisible ? 'Grafika CHAT skryta (demo)' : chatPaused ? 'Grafika CHAT pozastavena (demo)' : 'Automatika CHAT aktivní (demo)'}</div>
       <div className="filter-row"><button className={filter === 'all' ? 'selected' : ''} onClick={() => setFilter('all')}>Vše ({messages.length})</button><button className={filter === 'favorites' ? 'selected' : ''} onClick={() => setFilter('favorites')}>Oblíbené ({favorites.length})</button></div>
