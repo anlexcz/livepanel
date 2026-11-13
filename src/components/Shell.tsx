@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Activity, Archive, ChevronDown, Clapperboard, LayoutDashboard, Menu, Radio, Settings, Users, X } from 'lucide-react';
+import { Activity, Archive, ChevronDown, LayoutDashboard, Menu, Radio, Settings, Users, X } from 'lucide-react';
 import { Buttons, PanelButton } from './Ui';
 
 export type Section = 'live' | 'intro' | 'break' | 'outro' | 'archive' | 'diagnostics' | 'settings';
@@ -10,11 +10,11 @@ export function useNavigationGuard(dirty: boolean, save: () => void, discard: ()
   const context=useContext(GuardContext);
   useEffect(()=>context?.register({dirty,save,discard}),[context,dirty,save,discard]);
 }
-const sections: { id: Section; name: string; icon: typeof Radio; group?: string }[] = [
+const sections: { id: Section; name: string; icon?: typeof Radio; sceneMark?: string; group?: string }[] = [
   { id: 'live', name: 'Živá režie', icon: LayoutDashboard },
-  { id: 'intro', name: 'INTRO', icon: Clapperboard, group: 'Scénické overlaye' },
-  { id: 'break', name: 'BREAK', icon: Clapperboard },
-  { id: 'outro', name: 'OUTRO', icon: Clapperboard },
+  { id: 'intro', name: 'INTRO', sceneMark: 'IN', group: 'Scénické overlaye' },
+  { id: 'break', name: 'BREAK', sceneMark: 'BR' },
+  { id: 'outro', name: 'OUTRO', sceneMark: 'OUT' },
   { id: 'archive', name: 'Archiv', icon: Archive },
   { id: 'diagnostics', name: 'Diagnostika', icon: Activity },
   { id: 'settings', name: 'Nastavení', icon: Settings },
@@ -55,7 +55,7 @@ export default function Shell({ children }: { children: (section: Section) => Re
       <div className="rail-links">
         {sections.map(item=><div key={item.id}>
           {item.group&&<div className="rail-group"><span className="rail-label">{item.group}</span></div>}
-          <button className={'rail-link '+(section===item.id?'active':'')} type="button" title={item.name} aria-label={item.name} onClick={()=>navigate(item.id)}><item.icon size={21}/><span className="rail-label">{item.name}</span></button>
+          <button className={'rail-link '+(section===item.id?'active':'')} type="button" title={item.name} aria-label={item.name} onClick={()=>navigate(item.id)}>{item.sceneMark ? <span className="scene-nav-mark" aria-hidden="true">{item.sceneMark}</span> : item.icon ? <item.icon size={21}/> : null}<span className="rail-label">{item.name}</span></button>
         </div>)}
       </div>
     </aside>
@@ -63,7 +63,7 @@ export default function Shell({ children }: { children: (section: Section) => Re
     <nav className={'nav-drawer '+(open?'is-open':'')} aria-label="Navigace" aria-hidden={!open} inert={!open}>
       <div className="drawer-head"><button className="drawer-close" type="button" aria-label="Zavřít navigaci" title="Zavřít navigaci" onClick={()=>setOpen(false)}><X size={23}/></button><span>NAVIGACE</span></div>
       {sections.map(item=><div key={item.id}>{item.group&&<div className="nav-group">{item.group}<ChevronDown size={14}/></div>}
-        <button className={'nav-link '+(section===item.id?'active':'')} onClick={()=>navigate(item.id)}><item.icon size={18}/>{item.name}</button></div>)}
+        <button className={'nav-link '+(section===item.id?'active':'')} onClick={()=>navigate(item.id)}>{item.sceneMark ? <span className="scene-nav-mark" aria-hidden="true">{item.sceneMark}</span> : item.icon ? <item.icon size={18}/> : null}{item.name}</button></div>)}
     </nav>
     <header className="topbar">
       <button className="mobile-menu icon-button" aria-label="Otevřít navigaci" onClick={()=>setOpen(true)}><Menu size={22}/></button>
