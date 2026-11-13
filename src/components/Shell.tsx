@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Activity, Archive, ChevronDown, LayoutDashboard, Menu, Radio, Settings, Users, X } from 'lucide-react';
+import { Activity, Archive, ChevronDown, Clapperboard, LayoutDashboard, Menu, Radio, Settings, Users, X } from 'lucide-react';
 import { Buttons, PanelButton } from './Ui';
 
 export type Section = 'live' | 'intro' | 'break' | 'outro' | 'archive' | 'diagnostics' | 'settings';
