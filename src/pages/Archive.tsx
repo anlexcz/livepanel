@@ -33,7 +33,7 @@ export default function ArchivePage() {
       <div className="lp-filter-grid">
         <Field label="Od"><input type="date" value={from} max={to || undefined} onChange={e=>setFrom(e.target.value)}/></Field>
         <Field label="Do"><input type="date" value={to} min={from || undefined} onChange={e=>setTo(e.target.value)}/></Field>
-        <Field label="Typ"><select value={kind} onChange={e=>setKind(e.target.value)}><option value="all">Všechny události</option><option> Komentář </option><option value="Komentář">Komentář</option><option value="Super Chat">Super Chat</option><option value="Členství">Členství</option></select></Field>
+        <Field label="Typ"><select value={kind} onChange={e=>setKind(e.target.value)}><option value="all">Všechny události</option><option value="Komentář">Komentář</option><option value="Super Chat">Super Chat</option><option value="Členství">Členství</option></select></Field>
         <Field label="Hledat"><span className="lp-search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Autor nebo text"/></span></Field>
       </div>
       <div className="lp-filter-footer"><span>{rows.length} testovacích záznamů</span><Buttons>
