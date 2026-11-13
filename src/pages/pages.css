@@ -151,3 +151,17 @@
   .lp-library-row .lp-button-row{width:100%;justify-content:flex-start}
   .lp-field input:not([type=checkbox]):not([type=range]),.lp-field textarea,.lp-field select{font-size:16px}
 }
+
+/* Resize handle for scenic editor: independent form and preview scrolling */
+.lp-scene-columns{grid-template-columns:minmax(0,calc(var(--scene-form-width) - 6px)) 12px minmax(0,1fr);gap:0}
+.lp-scene-form{grid-column:1;grid-row:1;min-width:0;padding-right:6px}
+.lp-scene-preview-column{grid-column:3;grid-row:1;min-width:0;padding-left:6px}
+.lp-scene-resizer{grid-column:2;grid-row:1}
+@media(max-width:950px) and (min-width:761px){
+  .lp-scene-columns{grid-template-columns:minmax(0,calc(var(--scene-form-width) - 6px)) 12px minmax(0,1fr)}
+}
+@media(max-width:760px){
+  .lp-scene-columns{display:flex;flex-direction:column}
+  .lp-scene-resizer{display:none}
+  .lp-scene-form,.lp-scene-preview-column{padding:0}
+}
