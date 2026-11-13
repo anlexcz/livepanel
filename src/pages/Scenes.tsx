@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Clock3, Eye, Pause, Play, RotateCcw, Save, SkipForward } from 'lucide-react';
+import { Check, Pause, Play, RotateCcw, Save, SkipForward } from 'lucide-react';
 import { Buttons, DemoNotice, Field, PageHeading, PanelButton, Surface, UnsavedBar } from '../components/Ui';
 import { useNavigationGuard } from '../components/Shell';
 
