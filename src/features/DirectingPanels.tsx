@@ -64,6 +64,7 @@ export default function DirectingPanels({messages,favorites,featuredId,onFeature
     setEditorialEdit(null);
   }
   return <>
+    <div className="directing-live-column">
     <Module name="FEATURED" status={featured?'Zvýrazněn komentář':'Žádný aktivní komentář'} collapsed={collapsed.FEATURED} onToggle={()=>toggle('FEATURED')}>
       <div className="panel-state">{featured?<><Status type="good">Zvýraznění (demo)</Status><p><strong>{featured.author}</strong> · {featured.text}</p></>:<span>Žádný zvýrazněný komentář.</span>}</div>
       <div className="section-label">Oblíbené komentáře ({favorites.length})</div>
@@ -82,6 +83,8 @@ export default function DirectingPanels({messages,favorites,featuredId,onFeature
       </div>
       <PanelButton onClick={()=>setEvents(list=>[...list,{id:'evt-'+Date.now(),type:'Super Sticker',author:'Testovací divák',detail:'Ukázková událost'}])}><Plus size={15}/> Přidat testovací událost</PanelButton>
     </Module>
+    </div>
+    <div className="directing-content-column">
     <Module name="TICKER" status={tickerRunning?'Testovací dávka běží':'Automatika zastavena'} collapsed={collapsed.TICKER} onToggle={()=>toggle('TICKER')}>
       <div className="panel-state"><Status type={tickerRunning?'good':'neutral'}>{tickerRunning?'Dávka běží (demo)':'Automatika neběží'}</Status><p>{tickerCurrent?tickerItems.find(t=>t.id===tickerCurrent)?.text:'Žádná aktuálně vysílaná zpráva.'}</p></div>
       <Buttons><PanelButton primary onClick={sendTicker} disabled={!tickerItems.some(t=>t.enabled)}><Play size={15}/> {tickerRunning?'Další zpráva':'Spustit dávku'}</PanelButton><PanelButton onClick={()=>setTickerRunning(v=>!v)} disabled={!tickerCurrent}>{tickerRunning?<Pause size={15}/>:<Play size={15}/>} {tickerRunning?'Pauza':'Pokračovat'}</PanelButton><PanelButton onClick={()=>{setTickerRunning(false);setTickerCurrent(null)}}>Zastavit</PanelButton></Buttons>
@@ -104,5 +107,6 @@ export default function DirectingPanels({messages,favorites,featuredId,onFeature
         <PanelButton onClick={()=>startEditorialEdit()}><Plus size={15}/> Přidat titulek</PanelButton>
       </div>}
     </Module>
+    </div>
   </>;
 }

@@ -23,6 +23,16 @@ Vzhled vychází z dokumentu „Metrobus LivePanel – UI/UX Design a chování�
 
 **Pozor:** Lokální mock stav není serverový Production State. Žádné akce nevysílají do OBS. Osobní preference a skutečná produkční synchronizace budou implementovány později.
 
+
+## Layout Wizard – schválená revize 14. 11. 2026
+
+- Desktop nabízí režim **2 sloupce** (REŽIE 60 % / CHAT 40 %) a na širokém monitoru **3 sloupce** (TICKER+EDITORIAL 25 % / FEATURED+EVENT 35 % / CHAT 40 %). Tři sloupce jsou na široké obrazovce preferované, režim lze ručně přepnout.
+- Sloupce mají nezávislý scroll a přetahovatelné hranice; dvojklik na hranici obnoví výchozí poměry.
+- Desktopový levý rail se rozšiřuje jako součást layoutu místo překryvné vrstvy. Mobil používá dosavadní overlay. INTRO/BREAK/OUTRO jsou v rozšířené navigaci samostatně viditelné.
+- Horní lišta používá oficiální `znak_MB_bily.png` jako lokálně uložený `public/assets/metrobus-mark-white.png`. Favicon pochází z `znak_MB_vypln_bile.png`.
+- Výběr layoutu a velikosti sloupců jsou v této vývojové verzi uloženy pouze v `localStorage` prohlížeče. Není to ještě uživatelský profil na serveru.
+- Přesný breakpoint a minimální šířky jsou prototypové hodnoty k ověření při vizuálním testování, nikoli součást produkčního kontraktu.
+
 ## Dokumentace
 
 - [Hlavní koncepce](https://docs.google.com/document/d/1SYBHHQ58sdE3D_rJCb9AjMw0TO9JvJ9G5qU-WEvxd4I/edit)
