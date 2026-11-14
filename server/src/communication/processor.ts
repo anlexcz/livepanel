@@ -32,10 +32,15 @@ export class CommandProcessor {
   /** Call only after an authenticated/authorized transport boundary. */
   execute(candidate: unknown): Result {
     const command = decodeCommand(candidate);
-    const current = this.store.read();
-    if (!command) return { type:'RESULT', commandId: candidate && typeof candidate === 'object' &&
-      'commandId' in candidate && typeof candidate.commandId === 'string' && candidate.commandId.length <= 128
-        ? candidate.commandId : '', ok:false, revision:current.revision, error:'INVALID_COMMAND' };
+    const fallbackId = candidate && typeof candidate === 'object' && 'commandId' in candidate &&
+      typeof candidate.commandId === 'string' && candidate.commandId.length <= 128 ? candidate.commandId : '';
+    let revision: number;
+    try {
+      revision = this.store.read().revision;
+    } catch {
+      return {type:'RESULT',commandId:fallbackId,ok:false,revision:0,error:'PERSISTENCE_ERROR'};
+    }
+    if (!command) return {type:'RESULT',commandId:fallbackId,ok:false,revision,error:'INVALID_COMMAND'};
 
     const { commandId } = command;
     const hash = createHash('sha256').update(canonical({
@@ -99,7 +104,7 @@ export class CommandProcessor {
       }
       return result;
     } catch {
-      return {type:'RESULT',commandId,ok:false,revision:this.store.read().revision,error:'PERSISTENCE_ERROR'};
+      return {type:'RESULT',commandId,ok:false,revision,error:'PERSISTENCE_ERROR'};
     }
   }
 
