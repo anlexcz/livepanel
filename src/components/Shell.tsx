@@ -67,13 +67,13 @@ export default function Shell({ children }: { children: (section: Section) => Re
     <button className={'nav-backdrop '+(open?'is-open':'')} type="button" aria-label="Zavřít navigaci" aria-hidden={!open} tabIndex={open?0:-1} onClick={()=>setOpen(false)}/>
     <nav className={'nav-drawer '+(open?'is-open':'')} aria-label="Navigace" aria-hidden={!open} inert={!open}>
       <div className="drawer-head"><button className="drawer-close" type="button" aria-label="Zavřít navigaci" title="Zavřít navigaci" onClick={()=>setOpen(false)}><X size={23}/></button><span>NAVIGACE</span></div>
-      <button className={'nav-link '+(section==='live'?'active':'')} onClick={()=>navigate('live')}><LayoutDashboard size={18}/>Živá režie</button>
+      <button type="button" className={'nav-link '+(section==='live'?'active':'')} onClick={()=>navigate('live')}><LayoutDashboard size={18}/>Živá režie</button>
       <div className="nav-group"><Clapperboard size={18}/>Scénické overlaye</div>
-      {sceneSections.map(item=><button key={item.id} className={'nav-link scene-drawer-link '+(section===item.id?'active':'')} onClick={()=>navigate(item.id)}>{item.name}</button>)}
-      {sections.filter(item=>item.id!=='live').map(item=><button className={'nav-link '+(section===item.id?'active':'')} key={item.id} onClick={()=>navigate(item.id)}><item.icon size={18}/>{item.name}</button>)}
+      {sceneSections.map(item=><button type="button" key={item.id} className={'nav-link scene-drawer-link '+(section===item.id?'active':'')} onClick={()=>navigate(item.id)}>{item.name}</button>)}
+      {sections.filter(item=>item.id!=='live').map(item=><button type="button" className={'nav-link '+(section===item.id?'active':'')} key={item.id} onClick={()=>navigate(item.id)}><item.icon size={18}/>{item.name}</button>)}
     </nav>
     <header className="topbar">
-      <button className="mobile-menu icon-button" aria-label="Otevřít navigaci" onClick={()=>setOpen(true)}><Menu size={22}/></button>
+      <button type="button" className="mobile-menu icon-button" aria-label="Otevřít navigaci" onClick={()=>setOpen(true)}><Menu size={22}/></button>
       <span className="brand"><span className="brand-mark"><img className="brand-logo" src="/livepanel/assets/metrobus-mark-white.png" alt="Metrobus"/></span><span className="brand-title"><span className="brand-live">LIVE</span><span className="brand-panel">PANEL</span></span></span>
       <span className="top-spacer"/>
       <div className="status-strip" aria-label="Ukázkové provozní stavy">
@@ -81,7 +81,7 @@ export default function Shell({ children }: { children: (section: Section) => Re
         <span title="Collector: simulován"><Activity size={16} className="state-warn"/><span>MOCK</span></span>
         <span title="OBS: nepřipojeno"><Clapperboard size={16} className="state-error"/><span>OBS offline</span></span>
       </div>
-      <button className="operators" title="Testovací operátor, žádné reálné připojení"><Users size={18}/><span>1</span></button>
+      <button type="button" className="operators" title="Testovací operátor, žádné reálné připojení"><Users size={18}/><span>1</span></button>
     </header>
     <main className="main-content">{children(section)}</main>
     {pending&&<div className="lp-modal-backdrop" role="presentation"><div className="lp-modal" role="dialog" aria-modal="true" aria-labelledby="leave-title">
