@@ -11,7 +11,7 @@ type Props={
 function Module({name,status,collapsed,onToggle,children}:{name:Category;status:string;collapsed:boolean;onToggle:()=>void;children:React.ReactNode}){
   const Icon={FEATURED:Star,EVENT:Zap,TICKER:List,EDITORIAL:Type}[name];
   return <section className="panel director-panel">
-    <button className="panel-toggle" aria-expanded={!collapsed} onClick={onToggle}><span className="panel-heading"><Icon size={18}/>{name}</span><span className="panel-summary">{status}</span><ChevronDown size={18} className={'lp-collapse-chevron '+(collapsed?'':'is-open')}/></button>
+    <button type="button" className="panel-toggle" aria-expanded={!collapsed} onClick={onToggle}><span className="panel-heading"><Icon size={18}/>{name}</span><span className="panel-summary">{status}</span><ChevronDown size={18} className={'lp-collapse-chevron '+(collapsed?'':'is-open')}/></button>
     <div className={'lp-module-disclosure '+(collapsed?'':'is-open')} inert={collapsed} aria-hidden={collapsed}>
       <div className="lp-module-disclosure-inner"><div className="panel-body">{children}</div></div>
     </div>
@@ -201,13 +201,13 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
         </Buttons>
       </div>
       <div className="featured-tabs lp-motion-tabs" data-tab={featuredTab} role="tablist" aria-label="Zásobník FEATURED">
-        <button role="tab" aria-selected={featuredTab==='favorites'} className={featuredTab==='favorites'?'selected':''} onClick={()=>setFeaturedTab('favorites')}>Oblíbené ({favorites.length})</button>
-        <button role="tab" aria-selected={featuredTab==='shown'} className={featuredTab==='shown'?'selected':''} onClick={()=>setFeaturedTab('shown')}>Zobrazeno ({shownMessages.length})</button>
+        <button type="button" role="tab" aria-selected={featuredTab==='favorites'} className={featuredTab==='favorites'?'selected':''} onClick={()=>setFeaturedTab('favorites')}>Oblíbené ({favorites.length})</button>
+        <button type="button" role="tab" aria-selected={featuredTab==='shown'} className={featuredTab==='shown'?'selected':''} onClick={()=>setFeaturedTab('shown')}>Zobrazeno ({shownMessages.length})</button>
       </div>
       <div className="featured-list" role="tabpanel" aria-label={featuredTab==='favorites'?'Dosud nezobrazené oblíbené':'Zobrazené komentáře'}>
         <div className="lp-tab-content" key={featuredTab}>{(featuredTab==='favorites'?favorites:shownMessages).map(m=><div className={'compact-item '+(featuredId===m.id?'picked':'')} key={m.id}>
           <span className="featured-comment"><strong>{m.author}</strong><span>{m.text}</span></span>
-          <button className="small-button featured-action" onClick={()=>featureMessage(m.id)}>Zvýraznit</button>
+          <button type="button" className="small-button featured-action" onClick={()=>featureMessage(m.id)}>Zvýraznit</button>
         </div>)}
         {(featuredTab==='favorites'?favorites:shownMessages).length===0&&<Empty>{featuredTab==='favorites'?'Žádné oblíbené komentáře čekající na zobrazení.':'Zatím nebyl zobrazen žádný komentář.'}</Empty>}</div>
       </div>
@@ -225,8 +225,8 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
         </Buttons>
       </div>
       <div className="lp-event-tabs lp-motion-tabs" data-tab={eventTab} role="tablist" aria-label="Zásobník EVENT">
-        <button role="tab" aria-selected={eventTab==='waiting'} className={eventTab==='waiting'?'selected':''} onClick={()=>setEventTab('waiting')}>Čekající ({events.length})</button>
-        <button role="tab" aria-selected={eventTab==='history'} className={eventTab==='history'?'selected':''} onClick={()=>setEventTab('history')}>Historie ({eventHistory.length})</button>
+        <button type="button" role="tab" aria-selected={eventTab==='waiting'} className={eventTab==='waiting'?'selected':''} onClick={()=>setEventTab('waiting')}>Čekající ({events.length})</button>
+        <button type="button" role="tab" aria-selected={eventTab==='history'} className={eventTab==='history'?'selected':''} onClick={()=>setEventTab('history')}>Historie ({eventHistory.length})</button>
       </div>
       <div className="lp-event-list" role="tabpanel" aria-label={eventTab==='waiting'?'Čekající události':'Historie odbavených událostí'}>
         <div className="lp-tab-content" key={eventTab}>{(eventTab==='waiting'?events:eventHistory).map(e=><div className="compact-item" key={e.id}>
@@ -293,14 +293,14 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
                   onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveTicker()}else if(e.key==='Escape'){setTickerEdit(null)}}}/>:
                 <span className="lp-inline-content">{item.text}</span>}
               <div className="lp-row-actions">
-                {tickerEdit===item.id?<><button className="lp-icon-action" title="Uložit (Enter)" aria-label="Uložit úpravu" disabled={!tickerDraft.trim()} onClick={saveTicker}><Check size={17}/></button><button className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit úpravu" onClick={()=>setTickerEdit(null)}><X size={17}/></button></>:
-                <><button className="lp-icon-action" title="Upravit zprávu" aria-label="Upravit zprávu" onClick={()=>startTickerEdit(item)}><Pencil size={17}/></button><button className="lp-icon-action lp-delete" title="Smazat zprávu" aria-label="Smazat zprávu" onClick={()=>deleteTicker(item.id)}><Trash2 size={17}/></button></>}
+                {tickerEdit===item.id?<><button type="button" className="lp-icon-action" title="Uložit (Enter)" aria-label="Uložit úpravu" disabled={!tickerDraft.trim()} onClick={saveTicker}><Check size={17}/></button><button type="button" className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit úpravu" onClick={()=>setTickerEdit(null)}><X size={17}/></button></>:
+                <><button type="button" className="lp-icon-action" title="Upravit zprávu" aria-label="Upravit zprávu" onClick={()=>startTickerEdit(item)}><Pencil size={17}/></button><button type="button" className="lp-icon-action lp-delete" title="Smazat zprávu" aria-label="Smazat zprávu" onClick={()=>deleteTicker(item.id)}><Trash2 size={17}/></button></>}
               </div>
             </div>)}
             {tickerEdit==='new'&&<div className="lp-library-row lp-new-row">
               <input autoFocus className="lp-inline-text" aria-label="Nová zpráva" placeholder="Nová zpráva" value={tickerDraft}
                 onChange={e=>setTickerDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveTicker()}else if(e.key==='Escape')setTickerEdit(null)}}/>
-              <div className="lp-row-actions"><button className="lp-icon-action" title="Přidat (Enter)" aria-label="Přidat zprávu" disabled={!tickerDraft.trim()} onClick={saveTicker}><Check size={17}/></button><button className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit přidání" onClick={()=>setTickerEdit(null)}><X size={17}/></button></div>
+              <div className="lp-row-actions"><button type="button" className="lp-icon-action" title="Přidat (Enter)" aria-label="Přidat zprávu" disabled={!tickerDraft.trim()} onClick={saveTicker}><Check size={17}/></button><button type="button" className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit přidání" onClick={()=>setTickerEdit(null)}><X size={17}/></button></div>
             </div>}
             <div className="lp-add-action"><PanelButton onClick={()=>startTickerEdit()}><Plus size={15}/> Přidat zprávu</PanelButton></div>
           </div>
@@ -334,8 +334,8 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
                 </div>:
                 <div className="lp-library-text"><strong>{item.heading}</strong><small>{item.subheading}</small></div>}
               <div className="lp-row-actions">
-                {editorialEdit===item.id?<><button className="lp-icon-action" title="Uložit (Enter)" aria-label="Uložit titulek" disabled={!editorialDraft.heading.trim()} onClick={saveEditorial}><Check size={17}/></button><button className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit úpravu titulku" onClick={()=>setEditorialEdit(null)}><X size={17}/></button></>:
-                <><PanelButton primary={editorialCurrent?.id!==item.id} onClick={()=>editorialCurrent?.id===item.id?hideEditorial():setEditorialCurrent({...item})}>{editorialCurrent?.id===item.id?'Skrýt':'Zobrazit'}</PanelButton><button className="lp-icon-action" title="Upravit titulek" aria-label="Upravit titulek" onClick={()=>startEditorialEdit(item)}><Pencil size={17}/></button><button className="lp-icon-action lp-delete" title="Smazat titulek" aria-label="Smazat titulek" onClick={()=>{if(window.confirm('Odstranit položku z ukázkové knihovny? Aktivní titulek zůstane zobrazen.'))setEditorial(rows=>rows.filter(x=>x.id!==item.id))}}><Trash2 size={17}/></button></>}
+                {editorialEdit===item.id?<><button type="button" className="lp-icon-action" title="Uložit (Enter)" aria-label="Uložit titulek" disabled={!editorialDraft.heading.trim()} onClick={saveEditorial}><Check size={17}/></button><button type="button" className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit úpravu titulku" onClick={()=>setEditorialEdit(null)}><X size={17}/></button></>:
+                <><PanelButton primary={editorialCurrent?.id!==item.id} onClick={()=>editorialCurrent?.id===item.id?hideEditorial():setEditorialCurrent({...item})}>{editorialCurrent?.id===item.id?'Skrýt':'Zobrazit'}</PanelButton><button type="button" className="lp-icon-action" title="Upravit titulek" aria-label="Upravit titulek" onClick={()=>startEditorialEdit(item)}><Pencil size={17}/></button><button type="button" className="lp-icon-action lp-delete" title="Smazat titulek" aria-label="Smazat titulek" onClick={()=>{if(window.confirm('Odstranit položku z ukázkové knihovny? Aktivní titulek zůstane zobrazen.'))setEditorial(rows=>rows.filter(x=>x.id!==item.id))}}><Trash2 size={17}/></button></>}
               </div>
             </div>)}
             {editorialEdit==='new'&&<div className="lp-library-row lp-new-row">
@@ -343,7 +343,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
                 <input autoFocus placeholder="Nadpis" aria-label="Nový nadpis" value={editorialDraft.heading} onChange={e=>setEditorialDraft(v=>({...v,heading:e.target.value}))} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveEditorial()}else if(e.key==='Escape')setEditorialEdit(null)}}/>
                 <input placeholder="Podtitulek" aria-label="Nový podtitulek" value={editorialDraft.subheading} onChange={e=>setEditorialDraft(v=>({...v,subheading:e.target.value}))} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveEditorial()}else if(e.key==='Escape')setEditorialEdit(null)}}/>
               </div>
-              <div className="lp-row-actions"><button className="lp-icon-action" title="Přidat (Enter)" aria-label="Přidat titulek" disabled={!editorialDraft.heading.trim()} onClick={saveEditorial}><Check size={17}/></button><button className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit přidání titulku" onClick={()=>setEditorialEdit(null)}><X size={17}/></button></div>
+              <div className="lp-row-actions"><button type="button" className="lp-icon-action" title="Přidat (Enter)" aria-label="Přidat titulek" disabled={!editorialDraft.heading.trim()} onClick={saveEditorial}><Check size={17}/></button><button type="button" className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit přidání titulku" onClick={()=>setEditorialEdit(null)}><X size={17}/></button></div>
             </div>}
             <div className="lp-add-action"><PanelButton onClick={()=>startEditorialEdit()}><Plus size={15}/> Přidat titulek</PanelButton></div>
           </div>
