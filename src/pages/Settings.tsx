@@ -38,9 +38,9 @@ export default function SettingsPage(){
         </Surface></>}
         {section==='appearance'&&<><Surface title="Osobní preference" subtitle="Lokální nastavení bez vlivu na ostatní operátory">
           <div className="lp-kv"><span>Administrace</span><strong>Pouze téměř černé téma</strong></div>
-          <div className="lp-kv"><span>Výchozí sloupce</span><strong>REŽIE 60 % · CHAT 40 %</strong></div>
-          <Field label="Kompaktní zobrazení"><span className="lp-checkbox-line"><input type="checkbox" checked={compact} onChange={e=>setCompact(e.target.checked)}/> Zapnout kompaktní rozestupy (náhled preference)</span></Field>
-          <p className="lp-muted">Skutečné osobní preference budou později automaticky synchronizovány přes uživatelský účet. V tomto prototypu se nastavení neopírá o server.</p>
+          <div className="lp-kv"><span>Výchozí rozložení</span><strong>2 sloupce 60/40 · 3 sloupce 25/35/40</strong></div>
+          <Field label="Kompaktní zobrazení"><span className="lp-checkbox-line"><input type="checkbox" checked={compact} onChange={e=>setCompact(e.target.checked)}/> Kompaktní rozestupy (ukázková volba)</span></Field>
+          <p className="lp-muted">Přepínač je pouze ukázkou budoucí preference a zatím nemění skutečné rozestupy. Rozložení sloupců se nyní nastavuje přímo v režii a ukládá se místně v prohlížeči. Po zavedení účtů budou osobní preference synchronizovány přes server.</p>
         </Surface><Surface title="Rozlišení a přístupnost">
           <InfoRow icon={Monitor} title="Responzivní režie" detail="Na mobilu přepínání CHAT / REŽIE"/>
           <InfoRow icon={LockKeyhole} title="Bezpečné ovládání" detail="Serverové potvrzení produkčních akcí dosud neexistuje"/>
