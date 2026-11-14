@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { AlertTriangle, Eye, EyeOff, MessageSquare, Pause, Play, RotateCcw, Star, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, Eye, EyeOff, MessageSquare, Pause, Play, RotateCcw, Star, Trash2 } from 'lucide-react';
 import Shell from './components/Shell';
 import { initialMessages, type Category, type Message } from './mock/data';
 import DirectingPanels from './features/DirectingPanels';
@@ -11,7 +11,11 @@ import SettingsPage from './pages/Settings';
 type Filter = 'all' | 'favorites';
 type ActivePage = 'chat' | 'directing';
 function Directing() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    let shown: string[] = [];
+    try { const value=JSON.parse(sessionStorage.getItem('livepanel:demo-featured-shown') || '[]'); if (Array.isArray(value)) shown=value.filter((id): id is string => typeof id==='string'); } catch { /* fresh demo session */ }
+    return initialMessages.map(m=>({...m,featuredShown:shown.includes(m.id)}));
+  });
   const [filter, setFilter] = useState<Filter>('all');
   const [mobilePage, setMobilePage] = useState<ActivePage>('chat');
   const [collapsed, setCollapsed] = useState<Record<Category, boolean>>({ FEATURED: false, EVENT: false, TICKER: false, EDITORIAL: false });
@@ -95,7 +99,19 @@ function Directing() {
   }
   const chatScroll = useRef<HTMLDivElement>(null);
   const filtered = useMemo(() => messages.filter(m => filter === 'all' || m.favorite), [messages, filter]);
-  const favorites = messages.filter(m => m.favorite);
+  const favorites = messages.filter(m => m.favorite && !m.featuredShown);
+  const shownMessages = messages.filter(m => m.featuredShown);
+  function showFeatured(id: string | null) {
+    if (id !== null && !messages.some(m=>m.id===id)) return;
+    // Demo: the actual overlay display begins immediately after the local show command.
+    // Production must set featuredShown only after the server confirms display start.
+    if (id !== null) setMessages(previous=>{
+      const next=previous.map(m=>m.id===id?{...m,featuredShown:true}:m);
+      try { sessionStorage.setItem('livepanel:demo-featured-shown',JSON.stringify(next.filter(m=>m.featuredShown).map(m=>m.id))); } catch { /* volatile demo only */ }
+      return next;
+    });
+    setActiveFeatured(id);
+  }
   function toggleFavorite(id: string) { setMessages(previous => previous.map(m => m.id === id ? { ...m, favorite: !m.favorite } : m)); }
   function addDemoMessage() { const next = messages.length + 1; setMessages(previous => [...previous, { id: 'm' + next, author: 'Testovací divák', text: 'Nová ukázková zpráva číslo ' + next + '. Pouze test, bez YouTube API.', time: '19:' + String(next).padStart(2, '0'), favorite: false }]); requestAnimationFrame(() => { if (chatScroll.current) chatScroll.current.scrollTop = chatScroll.current.scrollHeight; }); }
   return <div className="live-view" style={{'--directing-width':directingWidth+'%','--first-width':threeWidths.left+'%','--middle-width':threeWidths.middle+'%'} as CSSProperties}>
@@ -113,10 +129,10 @@ function Directing() {
       <section className={'panel chat-panel ' + (mobilePage !== 'chat' ? 'mobile-hidden' : '')} aria-label="Živý chat"><div className="chat-head"><h2><MessageSquare size={19}/> CHAT</h2><div className="toolbar-actions"><button title={chatPaused ? 'Pokračovat' : 'Pozastavit'} aria-label={chatPaused ? 'Pokračovat' : 'Pozastavit'} className="icon-button" onClick={() => setChatPaused(!chatPaused)}>{chatPaused ? <Play size={17}/> : <Pause size={17}/>}</button><button title="Vyčistit grafiku – simulace" aria-label="Vyčistit grafiku – simulace" className="icon-button" disabled><Trash2 size={17}/></button><button title={chatVisible ? 'Skrýt CHAT v grafice – simulace' : 'Zobrazit CHAT v grafice – simulace'} aria-label="Přepnout viditelnost chatu" className="icon-button" onClick={() => setChatVisible(!chatVisible)}>{chatVisible ? <Eye size={17}/> : <EyeOff size={17}/>}</button></div></div>
       <div className="chat-state"><span className={'state-dot ' + (chatVisible && !chatPaused ? 'ok' : 'warn')}/>{!chatVisible ? 'Grafika CHAT skryta (demo)' : chatPaused ? 'Grafika CHAT pozastavena (demo)' : 'Automatika CHAT aktivní (demo)'}</div>
       <div className="filter-row"><button className={filter === 'all' ? 'selected' : ''} onClick={() => setFilter('all')}>Vše ({messages.length})</button><button className={filter === 'favorites' ? 'selected' : ''} onClick={() => setFilter('favorites')}>Oblíbené ({favorites.length})</button></div>
-      <div className="messages" ref={chatScroll} role="log" aria-label="Testovací zprávy">{filtered.map(m => <article className="message" key={m.id}><span className="avatar" aria-hidden="true">{m.author.slice(0,1)}</span><div className="message-content"><div className="message-meta"><strong>{m.author}</strong><time>{m.time}</time>{m.role && <span className="role">Člen</span>}</div><p>{m.text}</p></div><div className="message-actions" role="group" aria-label={`Akce komentáře od ${m.author}`}><button className={m.favorite ? 'is-active' : ''} aria-pressed={m.favorite} aria-label={m.favorite ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'} title={m.favorite ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'} onClick={() => toggleFavorite(m.id)}><Star size={17} fill={m.favorite ? 'currentColor' : 'none'}/></button><button className={activeFeatured === m.id ? 'is-active' : ''} aria-pressed={activeFeatured === m.id} aria-label="Zvýraznit komentář (demo)" onClick={() => { setActiveFeatured(m.id); }} title="Zvýraznit komentář (demo)"><Eye size={17}/></button></div></article>)}{filtered.length === 0 && <p className="empty">Žádné zprávy v tomto filtru.</p>}</div>
+      <div className="messages" ref={chatScroll} role="log" aria-label="Testovací zprávy">{filtered.map(m => <article className="message" key={m.id}><span className="avatar" aria-hidden="true">{m.author.slice(0,1)}</span><div className="message-content"><div className="message-meta"><strong>{m.author}</strong><time>{m.time}</time>{m.role && <span className="role">Člen</span>}</div><p>{m.text}</p></div><div className="message-actions" role="group" aria-label={`Akce komentáře od ${m.author}`}>{m.featuredShown&&<span className="message-shown-indicator" title="Už zobrazeno ve FEATURED" aria-label="Už zobrazeno ve FEATURED"><Check size={15}/></span>}<button className={m.favorite ? 'is-active' : ''} aria-pressed={m.favorite} aria-label={m.favorite ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'} title={m.favorite ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'} onClick={() => toggleFavorite(m.id)}><Star size={17} fill={m.favorite ? 'currentColor' : 'none'}/></button><button className={activeFeatured === m.id ? 'is-active' : ''} aria-pressed={activeFeatured === m.id} aria-label="Zvýraznit komentář (demo)" onClick={() => { showFeatured(m.id); }} title="Zvýraznit komentář (demo)"><Eye size={17}/></button></div></article>)}{filtered.length === 0 && <p className="empty">Žádné zprávy v tomto filtru.</p>}</div>
       <div className="chat-foot"><span>{messages.length} testovacích zpráv</span><button onClick={() => { if(chatScroll.current) chatScroll.current.scrollTop = chatScroll.current.scrollHeight; }}><RotateCcw size={14}/> Na konec</button></div></section>
       <div className={'directing-column ' + (mobilePage !== 'directing' ? 'mobile-hidden' : '')}>
-        <DirectingPanels messages={messages} favorites={favorites} featuredId={activeFeatured} onFeature={setActiveFeatured} collapsed={collapsed} toggle={category=>setCollapsed(v=>({...v,[category]:!v[category]}))}/>
+        <DirectingPanels messages={messages} favorites={favorites} shownMessages={shownMessages} featuredId={activeFeatured} onFeature={showFeatured} collapsed={collapsed} toggle={category=>setCollapsed(v=>({...v,[category]:!v[category]}))}/>
       </div>
     </div>
   </div>;
