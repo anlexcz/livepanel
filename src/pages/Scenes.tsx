@@ -6,7 +6,6 @@ import { defaultIntro, defaultBreak, defaultPokec, demoRead, demoWrite, outroTem
 import ScenePreview, { countdownSeconds, timeLabel } from './ScenePreview';
 
 type Configs={intro:IntroConfig;break:BreakConfig;outro:OutroConfig};
-const defaults: Configs={intro:defaultIntro,break:defaultBreak,outro:defaultPokec};
 const labels:Record<SceneKind,string>={intro:'INTRO',break:'BREAK',outro:'OUTRO'};
 const load=():Configs=>({
   intro:demoRead('intro',defaultIntro),
@@ -42,9 +41,8 @@ export default function SceneEditor({kind}:{kind:SceneKind}) {
     return value>=30&&value<=70?value:40;
   });
   const dirty=useMemo(()=>JSON.stringify(saved[kind])!==JSON.stringify(draft[kind]),[saved,draft,kind]);
-  const config=preview[kind];
   const template=outroTemplates.find(t=>t.id===selectedTemplate)||outroTemplates[0];
-  const duration=kind==='break'?breakDuration:kind==='intro'?20:template.duration;
+  const duration=kind==='break'?(started?breakDuration:countdownSeconds(preview.break)):kind==='intro'?20:template.duration;
   const finished=kind!=='intro'&&Number.isFinite(duration)&&started&&elapsed>=duration;
   function edit<K extends SceneKind>(target:K,changes:Partial<Configs[K]>,commit=false){
     setDraft(v=>({...v,[target]:{...v[target],...changes}}));
