@@ -4,6 +4,15 @@ import { createHash } from 'node:crypto';
 type Migration = { id: string; sql: string };
 const migrations: Migration[] = [
   { id: '001_baseline', sql: 'SELECT 1;' },
+  { id: '002_production_state', sql: `
+    CREATE TABLE production_state (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      stream_id TEXT,
+      revision INTEGER NOT NULL CHECK (revision >= 0),
+      state_json TEXT NOT NULL CHECK (json_valid(state_json)),
+      updated_at_ms INTEGER NOT NULL CHECK (updated_at_ms >= 0)
+    ) STRICT;
+  ` },
 ];
 
 export function migrate(db: Database.Database): void {
