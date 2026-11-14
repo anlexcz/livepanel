@@ -107,14 +107,13 @@ export class YouTubeCollector {
           throw new Error('stream disconnected');
         }catch(raw){
           if(signal.aborted)return;
-          const err=raw instanceof Error&&raw.message==='YOUTUBE_CHAT_ENDED'
-            ?new Error('YouTube chat ended'):classifyError(raw);
           if(raw instanceof Error&&raw.message==='YOUTUBE_CHAT_ENDED') {
             this.report({status:'error',method,reason:'ended'});return;
           }
-          if(err instanceof Error && !(err instanceof Error && 'reason' in err))throw err;
-          const categorized=classifyError(err);
-          if(categorized.reason!=='transient') {this.report({status:'error',method,reason:categorized.reason});return;}
+          const categorized=classifyError(raw);
+          if(categorized.reason!=='transient') {
+            this.report({status:'error',method,reason:categorized.reason});return;
+          }
           failures++;
           this.report({status:'reconnecting',method,reason:categorized.reason,reconnectCount:this.current.reconnectCount+1});
           if(failures>=threshold){method='list';listToken=undefined;continue;}
