@@ -22,8 +22,7 @@ export type ProductionAction =
 export class ProductionCommandError extends Error {
   constructor(public readonly code:string) { super(code); }
 }
-type Pending = {reject:(error:Error)=>void;resolve:()=>void;timer:ReturnType<typeof setTimeout>};
-type ResultFrame = {type:'RESULT';commandId:string;ok:boolean;revision:number;error?:string};
+type Pending = {reject:(error:Error)=>void;resolve:()=>void;timer:ReturnType<typeof setTimeout>;confirmedRevision?:number};
 
 const record=(value:unknown):value is Record<string,unknown> =>
   typeof value==='object'&&value!==null&&!Array.isArray(value);
@@ -34,15 +33,15 @@ export function parseSnapshot(value:unknown):ProductionSnapshot|null {
   if(!record(value)||!isRevision(value.revision)||!isRevision(value.updatedAtMs)||
     !isStringOrNull(value.streamId)||!record(value.state))return null;
   const s=value.state;
-  if(!record(s.chat)||!['enabled','paused','disabled'].includes(String(s.chat.mode))||
+  if(!record(s.chat)||(typeof s.chat.mode!=='string'||!['enabled','paused','disabled'].includes(s.chat.mode))||
     !record(s.featured)||!isStringOrNull(s.featured.messageId)||
     !(s.featured.expiresAtMs===null||isRevision(s.featured.expiresAtMs))||
     !record(s.event)||!Array.isArray(s.event.queue)||
     s.event.queue.some((id:unknown)=>typeof id!=='string')||typeof s.event.paused!=='boolean'||
-    !record(s.ticker)||!['stopped','running','paused'].includes(String(s.ticker.status))||
+    !record(s.ticker)||(typeof s.ticker.status!=='string'||!['stopped','running','paused'].includes(s.ticker.status))||
     !isRevision(s.ticker.position)||!record(s.editorial)||
     !isStringOrNull(s.editorial.itemId))return null;
-  return value as ProductionSnapshot;
+  return value as unknown as ProductionSnapshot;
 }
 const socketUrl=()=>`${location.protocol==='https:'?'wss:':'ws:'}//${location.host}/ws/operator`;
 export class ProductionClient {
@@ -67,7 +66,13 @@ export class ProductionClient {
     this.state={...this.state,...patch};
     for(const listener of this.listeners)listener(this.current());
   }
-  start():void {if(!this.stopped)this.connect();}
+  start():void {
+    // React StrictMode runs effect setup/cleanup twice during development.
+    if(this.socket||this.reconnectTimer!==null)return;
+    this.stopped=false;
+    this.retries=0;
+    this.connect();
+  }
   stop():void {
     this.stopped=true;this.epoch++;
     if(this.reconnectTimer!==null)clearTimeout(this.reconnectTimer);
@@ -117,6 +122,16 @@ export class ProductionClient {
     this.failPending('RESYNC_REQUIRED');
     this.socket?.close(1000,'Resync');
   }
+  private settleConfirmed():void {
+    const revision=this.state.snapshot?.revision;
+    for(const [id,request] of this.pending) {
+      if(request.confirmedRevision===undefined||revision===undefined||revision<request.confirmedRevision)continue;
+      clearTimeout(request.timer);
+      this.pending.delete(id);
+      request.resolve();
+    }
+    this.publish({pending:this.pending.size!==0});
+  }
   private receive(raw:unknown):void {
     if(!record(raw)||typeof raw.type!=='string') {this.resync('Neplatný formát zprávy.');return;}
     if(raw.type==='SNAPSHOT') {
@@ -132,10 +147,15 @@ export class ProductionClient {
       if(typeof raw.commandId!=='string')return;
       const pending=this.pending.get(raw.commandId);
       if(!pending)return;
-      this.pending.delete(raw.commandId);clearTimeout(pending.timer);
-      this.publish({pending:this.pending.size!==0});
-      if(raw.ok===true&&isRevision(raw.revision)) pending.resolve();
-      else pending.reject(new ProductionCommandError(typeof raw.error==='string'?raw.error:'COMMAND_REJECTED'));
+      if(raw.ok===true&&isRevision(raw.revision)) {
+        pending.confirmedRevision=raw.revision;
+        // RESULT alone is not sufficient; wait until the state revision is observed.
+        this.settleConfirmed();
+      } else {
+        this.pending.delete(raw.commandId);clearTimeout(pending.timer);
+        this.publish({pending:this.pending.size!==0});
+        pending.reject(new ProductionCommandError(typeof raw.error==='string'?raw.error:'COMMAND_REJECTED'));
+      }
       return;
     }
     if(raw.type!=='UPDATE')return;
@@ -152,6 +172,7 @@ export class ProductionClient {
     }
     if(!next){this.resync('Neplatná aktualizace.');return;}
     this.publish({snapshot:next});
+    this.settleConfirmed();
   }
   /** No optimistic mutation and no automatic resend of ambiguous commands. */
   send(action:ProductionAction,payload:Record<string,unknown>={}):Promise<void> {
