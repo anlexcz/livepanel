@@ -30,20 +30,20 @@ function context(run:(env:{
 
 test('FEATURED timeout is committed and broadcast once, without a new command row',()=>context(({db,store,processor,now,advance})=>{
   type FakeTimer={callback:()=>void;delay:number;unref:()=>void};
-  let active:FakeTimer|null=null;
+  const active:{timer:FakeTimer|null}={timer:null};
   const seen:Array<{revision:number;category:string}>=[];
   processor.subscribe(u=>seen.push({revision:u.revision,category:u.category}));
   const runtime=new ProductionRuntime(store,processor,now,
-    (callback,delay)=>{active={callback,delay,unref:()=>{}};return active as unknown as ReturnType<typeof setTimeout>;},
-    (timer)=>{if(active===timer)active=null;});
+    (callback,delay)=>{active.timer={callback,delay,unref:()=>{}};return active.timer as unknown as ReturnType<typeof setTimeout>;},
+    (timer)=>{if(active.timer===timer as unknown as FakeTimer)active.timer=null;});
   runtime.start();
-  assert.equal(active,null);
+  assert.equal(active.timer,null);
   processor.execute(cmd('runtime-0001','session.start',{streamId:'stream_1'}));
   processor.execute(cmd('runtime-0002','featured.show',{messageId:'msg_1',expiresAtMs:2000}));
-  assert.equal(active?.delay,1000);
+  assert.equal(active.timer?.delay,1000);
   assert.equal(store.read().revision,2);
   advance(1000);
-  const callback=active!.callback;
+  const callback=active.timer!.callback;
   callback();
   assert.equal(store.read().state.featured.messageId,null);
   assert.equal(store.read().revision,3);
@@ -115,21 +115,21 @@ test('invalid EVENT requests do not write or modify state',()=>context(({store,p
 }));
 
 test('runtime retry does not broadcast a false success after persistence failure',()=>context(({db,store,processor,now,advance})=>{
-  let pending:{callback:()=>void;delay:number;unref:()=>void}|null=null;
+  const pending:{timer:{callback:()=>void;delay:number;unref:()=>void}|null}={timer:null};
   const errors:unknown[]=[];
   const seen:number[]=[];
   processor.subscribe(u=>seen.push(u.revision));
   const runtime=new ProductionRuntime(store,processor,now,
-    (callback,delay)=>{pending={callback,delay,unref:()=>{}};return pending as unknown as ReturnType<typeof setTimeout>;},
-    ()=>{pending=null;},error=>errors.push(error));
+    (callback,delay)=>{pending.timer={callback,delay,unref:()=>{}};return pending.timer as unknown as ReturnType<typeof setTimeout>;},
+    ()=>{pending.timer=null;},error=>errors.push(error));
   processor.execute(cmd('runtime-4001','session.start',{streamId:'stream_4'}));
   processor.execute(cmd('runtime-4002','featured.show',{messageId:'a',expiresAtMs:2000}));
   runtime.start();
   advance(1000);
   db.close();
-  pending!.callback();
+  pending.timer!.callback();
   assert.equal(errors.length,1);
   assert.deepEqual(seen,[1,2]);
-  assert.equal(pending?.delay,1000);
+  assert.equal(pending.timer?.delay,1000);
   runtime.stop();
 }));
