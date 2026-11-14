@@ -106,3 +106,13 @@ test('settings label both layout modes and identify demo-only spacing toggle', (
   assert.ok(settings.includes('zatím nemění skutečné rozestupy'));
   assert.ok(settings.includes('ukládá se místně v prohlížeči'));
 });
+
+test('initial HTML never flashes an outdated duplicate administration UI', () => {
+  const html = read('index.html');
+  assert.match(html, /<div id="root"><\/div>/);
+  assert.match(html, /<script type="module" src="\/src\/main\.tsx"><\/script>/);
+  assert.ok(!html.includes('fallback-app'));
+  assert.ok(!html.includes('fallback-rail'));
+  assert.ok(!html.includes('fallback-panelhead'));
+  assert.match(html, /background:#0b0b0b/);
+});
