@@ -226,3 +226,5 @@
 }
 
 .scene-outro-egg{max-width:85%;font:500 clamp(8px,.9vw,13px)/1.4 Inter,sans-serif;color:#b6c8d2;text-align:center}
+
+.lp-preview:has(.scene-glow-light-glow) .scene-break-body .scene-wordmark{filter:brightness(0)}
