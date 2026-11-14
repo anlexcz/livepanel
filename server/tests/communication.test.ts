@@ -117,3 +117,15 @@ test('incidental FEATURED expiry produces one full-state UPDATE at one revision'
     db.close();rmSync(dir,{recursive:true,force:true});
   }
 });
+
+test('database failure never returns an acknowledged command',()=>{
+  const dir=mkdtempSync(join(tmpdir(),'mb-command-failure-'));
+  const db=openDatabase(join(dir,'state.sqlite'));
+  const store=new ProductionStore(db,()=>1000);
+  const processor=new CommandProcessor(db,store,()=>1000);
+  db.close();
+  const result=processor.execute(command('command-failure-0001','session.start',{streamId:'synthetic'}));
+  assert.equal(result.ok,false);
+  assert.equal(result.error,'PERSISTENCE_ERROR');
+  rmSync(dir,{recursive:true,force:true});
+});
