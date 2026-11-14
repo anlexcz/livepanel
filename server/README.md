@@ -5,14 +5,14 @@ Node.js 22, Fastify and a single SQLite database. Backend is not connected to th
 From the repository root:
 
 ```sh
-npm install
-npm install --prefix server
+npm ci
+npm ci --prefix server
 npm run backend:build
 npm run backend:start
 # GET http://127.0.0.1:3100/health
 ```
 
-Run checks: `npm run backend:build && npm run backend:test`.
+Run checks: `npm run backend:build && npm run backend:test`. GitHub Actions also starts an actual server on loopback and checks `/health` and `404` over HTTP.
 
 Environment variables are documented in `../.env.example`. The application reads its process environment; `.env.example` is documentation, not automatically loaded. Defaults bind only to the local loopback address. A remote bind requires LIVEPANEL_ALLOW_REMOTE=true, and must only be used behind a properly secured reverse proxy once authentication is implemented.
 
