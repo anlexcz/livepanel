@@ -7,6 +7,7 @@ import '@fontsource/inter/500.css';
 import '@fontsource/inter/600.css';
 import './styles.css';
 import './pages/pages.css';
+import './auth/auth.css';
 import App from './App';
 
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
