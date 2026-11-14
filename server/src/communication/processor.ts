@@ -29,6 +29,45 @@ export class CommandProcessor {
     return () => this.subscribers.delete(subscriber);
   }
 
+  /**
+   * Called by the server's timer after the FEATURED deadline. Persist expiry
+   * before publishing UPDATE, using the same monotonic revision contract.
+   * No commands or dedup entries are fabricated for system transitions.
+   */
+  reconcileRuntime(): boolean {
+    const before = this.store.read();
+    const after = this.store.reconcile();
+    if (after.revision === before.revision) return false;
+    const update = updateFromSnapshot('featured', after);
+    for (const subscriber of this.subscribers) {
+      try { subscriber(update); } catch { /* committed state remains authoritative */ }
+    }
+    return true;
+  }
+
+  /**
+   * Trusted collector-only ingestion. No network COMMAND exposes this method.
+   * Existing event IDs do not enter the queue twice, even after a restart.
+   * Queue remains FIFO; no automatic draining without an OBS playback engine.
+   */
+  enqueueEvent(eventId: string): boolean {
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(eventId)) throw new Error('Invalid event reference');
+    const before = this.store.read();
+    if (before.streamId === null) return false;
+    if (before.state.event.queue.includes(eventId)) return false;
+    if (before.state.event.queue.length >= 1000) throw new Error('EVENT queue is full');
+    const after = this.store.update(current => ({
+      state: {...current.state, event: {
+        ...current.state.event, queue: [...current.state.event.queue, eventId],
+      }},
+    }), before.revision);
+    const update = updateFromSnapshot('event',after);
+    for (const subscriber of this.subscribers) {
+      try { subscriber(update); } catch { /* persistence already committed */ }
+    }
+    return true;
+  }
+
   /** Call only after an authenticated/authorized transport boundary. */
   execute(candidate: unknown): Result {
     const command = decodeCommand(candidate);
@@ -136,6 +175,12 @@ export class CommandProcessor {
               return {state:{...state,editorial:{itemId:p.itemId as string}}};
             case 'editorial.hide':
               return {state:{...state,editorial:{itemId:null}}};
+            case 'event.pause':
+              if(state.event.paused) throw new Error('INVALID_STATE already paused');
+              return {state:{...state,event:{...state.event,paused:true}}};
+            case 'event.resume':
+              if(!state.event.paused) throw new Error('INVALID_STATE not paused');
+              return {state:{...state,event:{...state.event,paused:false}}};
             default:
               throw new Error('INVALID_STATE unsupported action');
           }
