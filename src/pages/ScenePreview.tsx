@@ -46,8 +46,9 @@ export default function ScenePreview({kind,intro,pause,outro,elapsed,duration,ba
         {outroPhase==='socials'&&<div className="scene-outro-detail"><small>{outro.socialsTitle}</small><strong>{outro.socialLink}</strong><span>{outro.ctaLeadTitle}</span></div>}
         {outroPhase==='supporters'&&<div className="scene-outro-detail scene-outro-supporters"><small>{outro.supportersTitle}</small><strong>{supporters.length?supporters.slice(0,10).join(' · '):'Ukázka bez importovaných podporovatelů'}</strong><span>{outro.forendorsText}</span></div>}
         {outroPhase==='end'&&<div className="scene-outro-detail"><strong>{outro.supportersThanks}</strong><span>{outro.footer}</span></div>}
+        {outro.easterEggs.length>0 && elapsed>6 && outroPhase!=='end' && <small className="scene-outro-egg">{outro.easterEggs[Math.floor(elapsed/Math.max(3,outro.easterEggRotateSec))%outro.easterEggs.length]}</small>}
       </div>}
     </div>
-    <div className="scene-preview-label">TESTOVACÍ NÁHLED · BEZ OBS {kind==='intro'&&hasStarted?introPhase==='loop'?'· TICHÁ SMYČKA':'· ÚVODNÍ SEK VENCE'.replace(' SEK V',' SEKV'):''}</div>
+    <div className="scene-preview-label">TESTOVACÍ NÁHLED · BEZ OBS {kind==='intro'&&hasStarted?introPhase==='loop'?'· TICHÁ SMYČKA':'· ÚVODNÍ SEKVENCE':''}</div>
   </div>;
 }
