@@ -47,7 +47,7 @@ export default function ArchivePage() {
       {rows.length===0?<Empty>Pro zvolené období nejsou žádná testovací data.</Empty>:
         <div className="lp-archive-list">{rows.map(row=><article className="lp-archive-row" key={row.id}>
           <div className="lp-archive-time"><CalendarDays size={15}/>{row.date.replace('T',' · ')}</div>
-          <div className="lp-archive-entry"><strong>{row.author}</strong><span className="lp-muted">{row.source}</span><span className="lp-archive-kind">{row.kind}</span>{row.featuredShown&&<span className="lp-archive-kind" title="Ve FEATURED již zobrazeno">Zobrazeno ve FEATURED</span>}<p>{row.content}</p></div>
+          <div className="lp-archive-entry"><div className="lp-archive-meta"><strong>{row.author}</strong><span className="lp-muted">{row.source}</span><span className="lp-archive-kind">{row.kind}</span>{row.featuredShown&&<span className="lp-archive-kind" title="Ve FEATURED již zobrazeno">Zobrazeno ve FEATURED</span>}</div><p>{row.content}</p></div>
         </article>)}</div>}
     </Surface>
   </div>;
