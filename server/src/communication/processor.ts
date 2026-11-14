@@ -3,7 +3,7 @@ import type Database from 'better-sqlite3';
 import { initialProductionState } from '../production/state.js';
 import { ProductionStore, RevisionConflictError, type ProductionSnapshot } from '../production/store.js';
 import {
-  decodeCommand, updateFromSnapshot,
+  categoryFor, decodeCommand, updateFromSnapshot,
   type Command, type Result, type Update,
 } from './protocol.js';
 
@@ -79,13 +79,13 @@ export class CommandProcessor {
       if (changedSnapshot && beforeSnapshot && result.ok) {
         const before: ProductionSnapshot = beforeSnapshot;
         const after: ProductionSnapshot = changedSnapshot;
-        const categories: Update['category'][] = [];
+        const categories: Update['category'][] = [categoryFor(command.action)];
         if (before.streamId !== after.streamId) {
-          categories.push('session');
+          if (!categories.includes('session')) categories.push('session');
         } else {
           for (const category of ['chat','featured','editorial'] as const) {
             if (JSON.stringify(before.state[category]) !== JSON.stringify(after.state[category])) {
-              categories.push(category);
+              if (!categories.includes(category)) categories.push(category);
             }
           }
         }
