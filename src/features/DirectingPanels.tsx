@@ -170,13 +170,18 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     </div>
     <div className="directing-content-column">
     <Module name="TICKER" status={tickerPhase==='idle'?'Automatika zastavena':tickerRunning?'Dávka běží':'Pozastaveno'} collapsed={collapsed.TICKER} onToggle={()=>toggle('TICKER')}>
-      <div className="panel-state"><Status type={tickerRunning?'good':tickerPhase==='idle'?'neutral':'warn'}>{tickerPhase==='idle'?'Automatika neběží':tickerRunning?'Dávka běží':'Pozastaveno'}</Status><p>{tickerCurrent?tickerCurrentText:'Žádná aktuálně vysílaná zpráva.'}</p></div>
-      <Buttons>
+      <div className="panel-state lp-ticker-state">
+        <div className="lp-ticker-state-heading">
+          <Status type={tickerRunning?'good':tickerPhase==='idle'?'neutral':'warn'}>{tickerPhase==='idle'?'Automatika neběží':tickerRunning?'Dávka běží':'Pozastaveno'}</Status>
+          {tickerPhase!=='idle'&&<span className="lp-ticker-countdown" aria-label={tickerPhase==='show'?'Zbývající čas zprávy':'Čas do další dávky'} title={tickerPhase==='show'?'Do konce zprávy':'Do další dávky'}><Clock3 size={13}/>{tickerCountdown} s</span>}
+        </div>
+        <p>{tickerCurrent?tickerCurrentText:'Žádná aktuálně vysílaná zpráva.'}</p>
+      </div>
+      <div className="lp-ticker-controls"><Buttons>
         <PanelButton primary onClick={sendTicker} disabled={!tickerItems.some(t=>t.enabled)}><Play size={15}/> {tickerPhase==='idle'?'Spustit dávku':tickerPhase==='between'?'Spustit nyní':'Další zpráva'}</PanelButton>
         <PanelButton onClick={pauseTicker} disabled={tickerPhase==='idle'}>{tickerRunning?<Pause size={15}/>:<Play size={15}/>} {tickerRunning?'Pozastavit':'Pokračovat'}</PanelButton>
         <PanelButton onClick={stopTicker}>Zastavit</PanelButton>
-      </Buttons>
-      {tickerPhase!=='idle'&&<p className="lp-muted">{tickerPhase==='show'?'Aktuální zpráva':'Do další dávky'} · {tickerCountdown} s {tickerRunning?'':'(pozastaveno)'}</p>}
+      </Buttons></div>
       <div className="lp-disclosure-block">
         <button type="button" className="lp-inline-disclosure" aria-expanded={tickerTimingOpen} onClick={()=>setTickerTimingOpen(v=>!v)}>
           <span><Clock3 size={15}/> Zpráva {tickerDuration} s · Dávka každých {tickerInterval} min</span>
