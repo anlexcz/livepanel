@@ -10,7 +10,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/src/index.js",
     "test": "node --test dist/tests/*.test.js",
-    "auth:provision": "node dist/src/auth/provision.js"
+    "auth:provision": "node dist/src/auth/provision.js",
+    "auth:manage": "node dist/src/auth/manage.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",

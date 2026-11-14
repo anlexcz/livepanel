@@ -11,7 +11,11 @@ function noStore(reply:FastifyReply):void {
 export function registerAuthHttp(app:FastifyInstance,auth:AuthService,expectedOrigin:string):void {
   const failures=new Map<string,{count:number;until:number}>();
   app.addHook('onRequest',async (request,reply)=>{
-    if (request.url.startsWith('/api/auth/')) noStore(reply);
+    if (request.url.startsWith('/api/auth/')) {
+      noStore(reply);
+      reply.header('X-Content-Type-Options','nosniff');
+      reply.header('Referrer-Policy','no-referrer');
+    }
   });
 
   app.post('/api/auth/login',async(request,reply)=>{
@@ -34,6 +38,23 @@ export function registerAuthHttp(app:FastifyInstance,auth:AuthService,expectedOr
     failures.delete(key);
     reply.header('Set-Cookie',sessionCookie(found.token,SESSION_TTL_MS/1000));
     return {user:{id:found.operator.id,username:found.operator.username,shared:found.operator.shared}};
+  });
+
+  app.post('/api/auth/password',async(request,reply)=>{
+    if(!sameOrigin(request,expectedOrigin)) return reply.code(403).send({error:'forbidden_origin'});
+    const token=cookieToken(request.headers.cookie);
+    const actor=auth.authenticate(token);
+    if(!actor) return reply.code(401).send({error:'unauthorized'});
+    const body=request.body;
+    if(!body||typeof body!=='object'||Array.isArray(body)) return reply.code(400).send({error:'invalid_request'});
+    const {currentPassword,newPassword}=body as Record<string,unknown>;
+    if(typeof currentPassword!=='string'||typeof newPassword!=='string'||
+      currentPassword.length>256||newPassword.length<12||newPassword.length>256)
+      return reply.code(400).send({error:'invalid_request'});
+    if(!await auth.changeOwnPassword(actor,currentPassword,newPassword))
+      return reply.code(403).send({error:'invalid_credentials'});
+    reply.header('Set-Cookie',clearSessionCookie());
+    return {ok:true,reauthenticate:true};
   });
 
   app.get('/api/auth/me',async(request,reply)=>{
