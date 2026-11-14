@@ -8,6 +8,7 @@ import ArchivePage from './pages/Archive';
 import DiagnosticsPage from './pages/Diagnostics';
 import SettingsPage from './pages/Settings';
 import AuthGate from './auth/AuthGate';
+import ProductionLive from './production/ProductionLive';
 
 type Filter = 'all' | 'favorites';
 type ActivePage = 'chat' | 'directing';
@@ -168,9 +169,9 @@ function Directing() {
     </div>
   </div>;
 }
-function DemoApplication() {
-  return <Shell>{section => {
-    if (section === 'live') return <Directing/>;
+function DemoApplication({ production = false }: { production?: boolean }) {
+  return <Shell production={production}>{section => {
+    if (section === 'live') return production ? <ProductionLive/> : <Directing/>;
     if (section === 'intro' || section === 'break' || section === 'outro') return <SceneEditor key={section} kind={section}/>;
     if (section === 'archive') return <ArchivePage/>;
     if (section === 'diagnostics') return <DiagnosticsPage/>;
@@ -181,7 +182,7 @@ function DemoApplication() {
 /** Production authentication is opt-in until the same-origin HTTPS deployment is prepared. */
 export default function App() {
   if(import.meta.env.VITE_LIVEPANEL_AUTH==='enabled') {
-    return <AuthGate>{()=><DemoApplication/>}</AuthGate>;
+    return <AuthGate>{()=><DemoApplication production/>}</AuthGate>;
   }
   return <DemoApplication/>;
 }
