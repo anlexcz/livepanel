@@ -20,6 +20,7 @@ export function createApp(db:Database.Database,logLevel='info',options:AppOption
     catch {reply.code(503);return {status:'unavailable',service:'metrobus-livepanel'};}
   });
 
+  if(options.devSockets&&options.publicOrigin) throw new Error('Unsafe WebSocket configuration');
   const store=new ProductionStore(db);
   const processor=new CommandProcessor(db,store);
   if(options.devSockets) registerDevSockets(app,store,processor);
