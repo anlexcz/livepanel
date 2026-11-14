@@ -38,3 +38,11 @@ test('TICKER keeps a snapshot of the active batch independent of its library', (
   assert.match(source, /const index=tickerBatchItems\.findIndex/);
   assert.ok(!source.includes('const index=enabled.findIndex(t=>t.id===tickerCurrent)'));
 });
+
+test('new mock event, TICKER and EDITORIAL IDs cannot collide within a millisecond', () => {
+  const source = read('src/features/DirectingPanels.tsx');
+  for (const prefix of ['tick-', 'edit-', 'evt-']) {
+    assert.ok(source.includes("'" + prefix + "'+crypto.randomUUID()"), prefix + ' must use a UUID');
+    assert.ok(!source.includes("'" + prefix + "'+Date.now()"));
+  }
+});

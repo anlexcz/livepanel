@@ -170,7 +170,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   }
   function saveTicker(){
     const txt=tickerDraft.trim();if(!txt)return;
-    const savedId=tickerEdit==='new'?'tick-'+Date.now():tickerEdit;
+    const savedId=tickerEdit==='new'?'tick-'+crypto.randomUUID():tickerEdit;
     setTickerItems(items=>tickerEdit==='new'?[...items,{id:savedId||'tick-new',text:txt,enabled:true}]:items.map(item=>item.id===tickerEdit?{...item,text:txt}:item));
     if(savedId)setRecentSave({kind:'ticker',id:savedId});
     setTickerEdit(null);
@@ -183,7 +183,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   function hideEditorial(){setEditorialCurrent(null);}
   function saveEditorial(){
     if(!editorialDraft.heading.trim())return;
-    const item={id:editorialEdit==='new'?'edit-'+Date.now():editorialEdit||'edit',heading:editorialDraft.heading.trim(),subheading:editorialDraft.subheading.trim()};
+    const item={id:editorialEdit==='new'?'edit-'+crypto.randomUUID():editorialEdit||'edit',heading:editorialDraft.heading.trim(),subheading:editorialDraft.subheading.trim()};
     setEditorial(items=>editorialEdit==='new'?[...items,item]:items.map(x=>x.id===editorialEdit?item:x));
     setRecentSave({kind:'editorial',id:item.id});
     setEditorialEdit(null);
@@ -238,7 +238,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
         </div>)}
         {(eventTab==='waiting'?events:eventHistory).length===0&&<Empty>{eventTab==='waiting'?'Fronta je prázdná.':'Dosud nebyla dokončena žádná událost.'}</Empty>}</div>
       </div>
-      <div className="lp-add-action"><PanelButton onClick={()=>setEvents(list=>[...list,{id:'evt-'+Date.now(),type:'Super Sticker',author:'Testovací divák',detail:'Ukázková událost'}])}><Plus size={15}/> Přidat testovací událost</PanelButton></div>
+      <div className="lp-add-action"><PanelButton onClick={()=>setEvents(list=>[...list,{id:'evt-'+crypto.randomUUID(),type:'Super Sticker',author:'Testovací divák',detail:'Ukázková událost'}])}><Plus size={15}/> Přidat testovací událost</PanelButton></div>
     </Module>
     </div>
     <div className="directing-content-column">
