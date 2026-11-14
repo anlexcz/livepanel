@@ -1,6 +1,6 @@
 
 /* Secondary administration pages and scene editor prototypes */
-.lp-page{height:100%;overflow-y:auto;padding:16px 18px 72px;scrollbar-width:thin;scrollbar-color:var(--lp-scroll-thumb) var(--lp-bg-base);display:flex;flex-direction:column;gap:14px}
+.lp-page{height:100%;overflow-y:auto;padding:var(--lp-page-inset) var(--lp-page-inset) 72px;scrollbar-width:thin;scrollbar-color:var(--lp-scroll-thumb) var(--lp-bg-base);display:flex;flex-direction:column;gap:14px}
 .lp-page-heading{display:flex;align-items:center;justify-content:space-between;gap:var(--lp-space-3)}
 .lp-page-heading h1{margin:0 0 4px}
 .lp-page-heading p{margin:0}
@@ -139,7 +139,7 @@
   .lp-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:760px){
-  .lp-page{padding:10px 10px 72px}
+  .lp-page{padding:var(--lp-page-inset) var(--lp-page-inset) 72px}
   .lp-scene-columns{display:flex;flex-direction:column}
   .lp-scene-preview-column{order:-1;width:100%}
   .lp-scene-form{width:100%}

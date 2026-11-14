@@ -66,3 +66,14 @@ test('secondary page focus and active tabs retain the Metrobus accent', () => {
   assert.match(pages, /\.lp-segment button\.is-selected\{box-shadow:inset 0 -2px var\(--lp-accent\)\}/);
   assert.match(pages, /\.lp-disclosure summary:focus-visible/);
 });
+
+test('live and secondary pages use the same outer inset at desktop and mobile sizes', () => {
+  const main = read('src/styles.css');
+  const pages = read('src/pages/pages.css');
+  assert.match(main, /--lp-page-inset:\s*var\(--lp-space-3\)/);
+  assert.match(main, /@media \(max-width:760px\)\{:root\{--lp-page-inset:var\(--lp-space-2\)\}/);
+  assert.match(main, /\.live-view\{[^}]*padding:var\(--lp-page-inset\)/);
+  assert.match(pages, /\.lp-page\{[^}]*padding:var\(--lp-page-inset\) var\(--lp-page-inset\) 72px/);
+  assert.ok(!pages.includes('padding:16px 18px 72px'));
+  assert.ok(!pages.includes('padding:10px 10px 72px'));
+});
