@@ -16,18 +16,19 @@ export function timeLabel(seconds: number) {
 }
 type Props = {
   kind: SceneKind; intro: IntroConfig; pause: BreakConfig; outro: OutroConfig;
-  elapsed: number; duration: number; background: string; hasStarted: boolean;
+  elapsed: number; duration: number; background: string; hasStarted: boolean; playing: boolean;
   supporters: string[];
 };
-export default function ScenePreview({kind,intro,pause,outro,elapsed,duration,background,hasStarted,supporters}: Props) {
+export default function ScenePreview({kind,intro,pause,outro,elapsed,duration,background,hasStarted,playing,supporters}: Props) {
   const introPhase = !hasStarted ? 'idle' : elapsed<1.5 ? 'delay' : elapsed<20 ? 'opening' : 'loop';
   const breakFinished=hasStarted && pause.countdown!=='off' && elapsed>=duration;
   const outroPhase=elapsed<6?'logo':elapsed<12?'guests':elapsed<18?'socials':elapsed<27?'supporters':'end';
+  const introOpening=Math.min(1,Math.max(0,(elapsed-1.5)/1.3));
   const introPosition=Math.min(100,Math.max(0,(elapsed-1.5)/18.5*100));
   return <div className={'lp-preview lp-preview-'+background} aria-label="Samostatný lokální grafický náhled scény">
     {kind==='break'&&<div aria-hidden="true" className={'scene-glow scene-glow-'+pause.background}/>}
     <div className={'scene-art scene-art-'+kind+' '+(kind==='intro'?'scene-intro-'+introPhase:'')}>
-      {kind==='intro'&&<div className="scene-intro-body">
+      {kind==='intro'&&<div className="scene-intro-body" style={introPhase==='opening'?{opacity:introOpening,transform:'scale('+(0.94+0.06*introOpening)+')'}:undefined}>
         <div className="scene-intro-line" style={{width:introPhase==='opening'?introPosition+'%':introPhase==='delay'?'0%':'100%'}}/>
         <img className="scene-wordmark" src="/livepanel/assets/metrobus-white.png" alt="Metrobus"/>
         {intro.title.trim()&&<strong className="scene-intro-title">{intro.title}</strong>}
