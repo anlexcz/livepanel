@@ -21,7 +21,7 @@ test('initial singleton state is valid, idle, and migration is idempotent', () =
     assert.equal(store.read().revision, 0);
     assert.equal(store.read().streamId, null);
     assert.equal((db.prepare('SELECT count(*) n FROM production_state').get() as {n: number}).n, 1);
-    assert.equal((db.prepare('SELECT count(*) n FROM schema_migrations').get() as {n: number}).n, 3);
+    assert.equal((db.prepare('SELECT count(*) n FROM schema_migrations').get() as {n: number}).n, 4);
     new ProductionStore(db, () => 1000);
     assert.equal((db.prepare('SELECT count(*) n FROM production_state').get() as {n: number}).n, 1);
   } finally { db.close(); }
