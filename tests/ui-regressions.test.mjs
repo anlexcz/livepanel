@@ -77,3 +77,16 @@ test('live and secondary pages use the same outer inset at desktop and mobile si
   assert.ok(!pages.includes('padding:16px 18px 72px'));
   assert.ok(!pages.includes('padding:10px 10px 72px'));
 });
+
+test('settings and diagnostics reuse shared components without changing content labels', () => {
+  const ui = read('src/components/Ui.tsx');
+  const settings = read('src/pages/Settings.tsx');
+  const diagnostics = read('src/pages/Diagnostics.tsx');
+  assert.ok(ui.includes('export function InfoRow('));
+  assert.ok(ui.includes('export function MetricCard('));
+  assert.equal((settings.match(/<InfoRow /g) || []).length, 5);
+  assert.equal((diagnostics.match(/<MetricCard /g) || []).length, 6);
+  for (const label of ['Testovací operátor', 'Metrobus', 'YouTube kanál Metrobus', 'Responzivní režie', 'Bezpečné ovládání']) {
+    assert.ok(settings.includes('title="' + label + '"'));
+  }
+});
