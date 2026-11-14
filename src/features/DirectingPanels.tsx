@@ -101,6 +101,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     else advanceTicker();
   }
   function startTickerEdit(item?:TickerItem){
+    setTickerLibraryOpen(true);
     setTickerEdit(item?.id||'new');
     setTickerDraft(item?.text||'');
   }
@@ -110,6 +111,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     setTickerEdit(null);
   }
   function startEditorialEdit(item?:EditorialItem){
+    setShowEditorialLibrary(true);
     setEditorialEdit(item?.id||'new');
     setEditorialDraft({heading:item?.heading||'',subheading:item?.subheading||''});
   }
@@ -149,25 +151,104 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     <div className="directing-content-column">
     <Module name="TICKER" status={tickerRunning?'Testovací dávka běží':'Automatika zastavena'} collapsed={collapsed.TICKER} onToggle={()=>toggle('TICKER')}>
       <div className="panel-state"><Status type={tickerRunning?'good':'neutral'}>{tickerRunning?'Dávka běží (demo)':'Automatika neběží'}</Status><p>{tickerCurrent?tickerItems.find(t=>t.id===tickerCurrent)?.text:'Žádná aktuálně vysílaná zpráva.'}</p></div>
-      <Buttons><PanelButton primary onClick={sendTicker} disabled={!tickerItems.some(t=>t.enabled)}><Play size={15}/> {tickerRunning?'Další zpráva':'Spustit dávku'}</PanelButton><PanelButton onClick={()=>setTickerRunning(v=>!v)} disabled={!tickerCurrent}>{tickerRunning?<Pause size={15}/>:<Play size={15}/>} {tickerRunning?'Pauza':'Pokračovat'}</PanelButton><PanelButton onClick={()=>{setTickerRunning(false);setTickerCurrent(null)}}>Zastavit</PanelButton></Buttons>
-      <div className="section-label">Knihovna zpráv ({tickerItems.filter(i=>i.enabled).length} aktivní)</div>
-      {tickerItems.map(item=><div className="lp-library-row" key={item.id}>
-        <label className="lp-checkbox-line"><input type="checkbox" checked={item.enabled} onChange={e=>setTickerItems(rows=>rows.map(row=>row.id===item.id?{...row,enabled:e.target.checked}:row))}/><span>{item.text}</span></label>
-        <button className="lp-text-action" onClick={()=>startTickerEdit(item)}>Upravit</button>
-      </div>)}
-      {tickerEdit&&<div className="lp-inline-editor"><label>Text zprávy<textarea rows={2} value={tickerDraft} onChange={e=>setTickerDraft(e.target.value)}/></label><Buttons><PanelButton primary onClick={saveTicker} disabled={!tickerDraft.trim()}>Uložit (demo)</PanelButton><PanelButton onClick={()=>setTickerEdit(null)}>Zrušit</PanelButton></Buttons></div>}
-      <div className="lp-add-action"><PanelButton onClick={()=>startTickerEdit()}><Plus size={15}/> Přidat zprávu</PanelButton></div>
-      <p className="lp-muted">Automatické dávkování a serverové časování nejsou implementovány; položky se v demo režimu posouvají ručně.</p>
+      <Buttons>
+        <PanelButton primary onClick={sendTicker} disabled={!tickerItems.some(t=>t.enabled)}><Play size={15}/> {tickerPhase==='idle'?'Spustit dávku':tickerPhase==='between'?'Spustit nyní':'Další zpráva'}</PanelButton>
+        <PanelButton onClick={pauseTicker} disabled={tickerPhase==='idle'}>{tickerRunning?<Pause size={15}/>:<Play size={15}/>} {tickerRunning?'Pozastavit':'Pokračovat'}</PanelButton>
+        <PanelButton onClick={stopTicker}>Zastavit</PanelButton>
+      </Buttons>
+      {tickerPhase!=='idle'&&<p className="lp-muted">Demo: {tickerPhase==='show'?'Aktuální zpráva':'Do další dávky'} · {tickerCountdown} s {tickerRunning?'':'(pozastaveno)'}</p>}
+      <div className="lp-disclosure-block">
+        <button type="button" className="lp-inline-disclosure" aria-expanded={tickerTimingOpen} onClick={()=>setTickerTimingOpen(v=>!v)}>
+          <span><Clock3 size={15}/> Zpráva {tickerDuration} s · Dávka každých {tickerInterval} min</span>
+          {tickerTimingOpen?<ChevronUp size={16}/>:<ChevronDown size={16}/>}
+        </button>
+        <div className={'lp-animated-disclosure '+(tickerTimingOpen?'is-open':'')} inert={!tickerTimingOpen}>
+          <div className="lp-animated-disclosure-inner">
+            <div className="lp-timing-options">
+              <label>Délka jedné zprávy</label>
+              <div className="lp-timing-choices">
+                {[10,20,30].map(value=><button key={value} type="button" className={!tickerDurationCustom&&tickerDuration===value?'selected':''} onClick={()=>{setTickerDuration(value);setTickerDurationCustom(false)}}>{value} s</button>)}
+                <button type="button" className={tickerDurationCustom?'selected':''} onClick={()=>setTickerDurationCustom(true)}>Vlastní</button>
+              </div>
+              {tickerDurationCustom&&<label className="lp-timing-custom">Sekund <input aria-label="Vlastní délka zprávy v sekundách" type="number" min="1" max="3600" value={tickerDuration} onChange={e=>setTickerDuration(Math.min(3600,Math.max(1,Number(e.target.value)||1)))}/></label>}
+              <label>Interval mezi začátky dávek</label>
+              <div className="lp-timing-choices">
+                {[2,5,10].map(value=><button key={value} type="button" className={!tickerIntervalCustom&&tickerInterval===value?'selected':''} onClick={()=>{setTickerInterval(value);setTickerIntervalCustom(false)}}>{value} min</button>)}
+                <button type="button" className={tickerIntervalCustom?'selected':''} onClick={()=>setTickerIntervalCustom(true)}>Vlastní</button>
+              </div>
+              {tickerIntervalCustom&&<label className="lp-timing-custom">Minut <input aria-label="Vlastní interval dávek v minutách" type="number" min="1" max="1440" value={tickerInterval} onChange={e=>setTickerInterval(Math.min(1440,Math.max(1,Number(e.target.value)||1)))}/></label>}
+              <p className="lp-muted">Změny časování platí od další dávky. Interval se počítá od začátku předchozí dávky, dávky se nikdy nepřekrývají.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="lp-disclosure-block">
+        <button type="button" className="lp-inline-disclosure" aria-expanded={tickerLibraryOpen} onClick={()=>setTickerLibraryOpen(v=>!v)}>
+          <span>Knihovna zpráv ({tickerItems.filter(i=>i.enabled).length} aktivní)</span>
+          {tickerLibraryOpen?<ChevronUp size={16}/>:<ChevronDown size={16}/>}
+        </button>
+        <div className={'lp-animated-disclosure '+(tickerLibraryOpen?'is-open':'')} inert={!tickerLibraryOpen}>
+          <div className="lp-animated-disclosure-inner">
+            {tickerItems.map(item=><div className="lp-library-row" key={item.id}>
+              <label className="lp-checkbox-line"><input type="checkbox" checked={item.enabled} onChange={e=>setTickerItems(rows=>rows.map(row=>row.id===item.id?{...row,enabled:e.target.checked}:row))} aria-label={'Zahrnout zprávu: '+item.text}/></label>
+              {tickerEdit===item.id?
+                <input className="lp-inline-text" autoFocus aria-label="Upravit text zprávy" value={tickerDraft}
+                  onChange={e=>setTickerDraft(e.target.value)}
+                  onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveTicker()}else if(e.key==='Escape'){setTickerEdit(null)}}}/>:
+                <span className="lp-inline-content">{item.text}</span>}
+              <div className="lp-row-actions">
+                {tickerEdit===item.id?<><button className="lp-icon-action" title="Uložit (Enter)" aria-label="Uložit úpravu" disabled={!tickerDraft.trim()} onClick={saveTicker}><Check size={17}/></button><button className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit úpravu" onClick={()=>setTickerEdit(null)}><X size={17}/></button></>:
+                <button className="lp-icon-action" title="Upravit zprávu" aria-label="Upravit zprávu" onClick={()=>startTickerEdit(item)}><Pencil size={17}/></button>}
+              </div>
+            </div>)}
+            {tickerEdit==='new'&&<div className="lp-library-row lp-new-row">
+              <input autoFocus className="lp-inline-text" aria-label="Nová zpráva" placeholder="Nová zpráva" value={tickerDraft}
+                onChange={e=>setTickerDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveTicker()}else if(e.key==='Escape')setTickerEdit(null)}}/>
+              <div className="lp-row-actions"><button className="lp-icon-action" title="Přidat (Enter)" aria-label="Přidat zprávu" disabled={!tickerDraft.trim()} onClick={saveTicker}><Check size={17}/></button><button className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit přidání" onClick={()=>setTickerEdit(null)}><X size={17}/></button></div>
+            </div>}
+            <div className="lp-add-action"><PanelButton onClick={()=>startTickerEdit()}><Plus size={15}/> Přidat zprávu</PanelButton></div>
+          </div>
+        </div>
+      </div>
+      <p className="lp-muted">Automatické dávkování je zde pouze lokální simulace; serverové časování a OBS zatím nejsou připojené.</p>
     </Module>
     <Module name="EDITORIAL" status={editorialCurrent?'Aktivní titulek':'Žádný aktivní titulek'} collapsed={collapsed.EDITORIAL} onToggle={()=>toggle('EDITORIAL')}>
       <div className="panel-state">{editorialCurrent?<><Status type="good">Titulek aktivní (demo)</Status><p><strong>{editorialCurrent.heading}</strong><br/>{editorialCurrent.subheading}</p></>:'Momentálně není zobrazen žádný titulek.'}</div>
-      <Buttons><PanelButton onClick={()=>setShowEditorialLibrary(x=>!x)}>{showEditorialLibrary?'Skrýt knihovnu':'Vybrat titulek'}</PanelButton>{editorialCurrent&&<PanelButton danger onClick={()=>setEditorialCurrent(null)}><EyeOff size={15}/> Skrýt titulek</PanelButton>}</Buttons>
-      {showEditorialLibrary&&<div className="lp-subsection">
-        <div className="section-label">Knihovna titulků ({editorial.length})</div>
-        {editorial.map(item=><div className="lp-library-row" key={item.id}><div className="lp-library-text"><strong>{item.heading}</strong><small>{item.subheading}</small></div><Buttons><PanelButton primary onClick={()=>setEditorialCurrent({...item})}>Zobrazit</PanelButton><PanelButton onClick={()=>startEditorialEdit(item)}>Upravit</PanelButton><button title="Smazat z knihovny" className="lp-text-action" onClick={()=>{if(window.confirm('Odstranit položku z ukázkové knihovny? Aktivní titulek zůstane zobrazen.'))setEditorial(rows=>rows.filter(x=>x.id!==item.id))}}>Smazat</button></Buttons></div>)}
-        {editorialEdit&&<div className="lp-inline-editor"><label>Nadpis<input value={editorialDraft.heading} onChange={e=>setEditorialDraft(v=>({...v,heading:e.target.value}))}/></label><label>Podtitulek<input value={editorialDraft.subheading} onChange={e=>setEditorialDraft(v=>({...v,subheading:e.target.value}))}/></label><Buttons><PanelButton primary onClick={saveEditorial} disabled={!editorialDraft.heading.trim()}>Uložit (demo)</PanelButton><PanelButton onClick={()=>setEditorialEdit(null)}>Zrušit</PanelButton></Buttons></div>}
-        <div className="lp-add-action"><PanelButton onClick={()=>startEditorialEdit()}><Plus size={15}/> Přidat titulek</PanelButton></div>
-      </div>}
+      {editorialCurrent&&<Buttons><PanelButton danger onClick={()=>setEditorialCurrent(null)}><EyeOff size={15}/> Skrýt titulek</PanelButton></Buttons>}
+      <div className="lp-disclosure-block">
+        <button type="button" className="lp-inline-disclosure" aria-expanded={showEditorialLibrary} onClick={()=>setShowEditorialLibrary(v=>!v)}>
+          <span>Knihovna titulků ({editorial.length})</span>
+          {showEditorialLibrary?<ChevronUp size={16}/>:<ChevronDown size={16}/>}
+        </button>
+        <div className={'lp-animated-disclosure '+(showEditorialLibrary?'is-open':'')} inert={!showEditorialLibrary}>
+          <div className="lp-animated-disclosure-inner">
+            {editorial.map(item=><div className="lp-library-row" key={item.id}>
+              {editorialEdit===item.id?
+                <div className="lp-inline-editorial-fields">
+                  <input autoFocus aria-label="Nadpis titulku" value={editorialDraft.heading}
+                    onChange={e=>setEditorialDraft(v=>({...v,heading:e.target.value}))}
+                    onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveEditorial()}else if(e.key==='Escape')setEditorialEdit(null)}}/>
+                  <input aria-label="Podtitulek titulku" value={editorialDraft.subheading}
+                    onChange={e=>setEditorialDraft(v=>({...v,subheading:e.target.value}))}
+                    onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveEditorial()}else if(e.key==='Escape')setEditorialEdit(null)}}/>
+                </div>:
+                <div className="lp-library-text"><strong>{item.heading}</strong><small>{item.subheading}</small></div>}
+              <div className="lp-row-actions">
+                {editorialEdit===item.id?<><button className="lp-icon-action" title="Uložit (Enter)" aria-label="Uložit titulek" disabled={!editorialDraft.heading.trim()} onClick={saveEditorial}><Check size={17}/></button><button className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit úpravu titulku" onClick={()=>setEditorialEdit(null)}><X size={17}/></button></>:
+                <><PanelButton primary onClick={()=>setEditorialCurrent({...item})}>Zobrazit</PanelButton><button className="lp-icon-action" title="Upravit titulek" aria-label="Upravit titulek" onClick={()=>startEditorialEdit(item)}><Pencil size={17}/></button><button className="lp-icon-action lp-delete" title="Smazat titulek" aria-label="Smazat titulek" onClick={()=>{if(window.confirm('Odstranit položku z ukázkové knihovny? Aktivní titulek zůstane zobrazen.'))setEditorial(rows=>rows.filter(x=>x.id!==item.id))}}><Trash2 size={17}/></button></>}
+              </div>
+            </div>)}
+            {editorialEdit==='new'&&<div className="lp-library-row lp-new-row">
+              <div className="lp-inline-editorial-fields">
+                <input autoFocus placeholder="Nadpis" aria-label="Nový nadpis" value={editorialDraft.heading} onChange={e=>setEditorialDraft(v=>({...v,heading:e.target.value}))} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveEditorial()}else if(e.key==='Escape')setEditorialEdit(null)}}/>
+                <input placeholder="Podtitulek" aria-label="Nový podtitulek" value={editorialDraft.subheading} onChange={e=>setEditorialDraft(v=>({...v,subheading:e.target.value}))} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();saveEditorial()}else if(e.key==='Escape')setEditorialEdit(null)}}/>
+              </div>
+              <div className="lp-row-actions"><button className="lp-icon-action" title="Přidat (Enter)" aria-label="Přidat titulek" disabled={!editorialDraft.heading.trim()} onClick={saveEditorial}><Check size={17}/></button><button className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit přidání titulku" onClick={()=>setEditorialEdit(null)}><X size={17}/></button></div>
+            </div>}
+            <div className="lp-add-action"><PanelButton onClick={()=>startEditorialEdit()}><Plus size={15}/> Přidat titulek</PanelButton></div>
+          </div>
+        </div>
+      </div>
     </Module>
     </div>
   </>;
