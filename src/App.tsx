@@ -105,6 +105,8 @@ function Directing() {
   // Freeze the set and order of visible messages while an operator reads or acts.
   // Unlike scroll-offset compensation this also works when the list is shorter than its viewport.
   const [frozenChatIds,setFrozenChatIds]=useState<string[]|null>(null);
+  // A hover lock is temporary; manually scrolling into history stays locked until returning to newest.
+  const chatHistoryLock=useRef(false);
   const filtered = useMemo(() => messages.filter(m => filter === 'all' || m.favorite).reverse(), [messages, filter]);
   const visibleMessages=useMemo(()=>{
     if(frozenChatIds===null)return filtered;
@@ -114,8 +116,20 @@ function Directing() {
   const unseenCount=frozenChatIds===null?0:filtered.filter(m=>!frozenChatIds.includes(m.id)).length;
   const freezeChat=()=>setFrozenChatIds(previous=>previous??filtered.map(m=>m.id));
   const returnToNewest=()=>{
+    chatHistoryLock.current=false;
     setFrozenChatIds(null);
     // Releasing the frozen snapshot may prepend rows: reset before paint.
+  };
+  const leaveChatHover=(pointerType:string)=>{
+    if(pointerType==='touch'||chatHistoryLock.current)return;
+    // Hover alone is not a persistent reading pause: resume live updates on mouse exit.
+    setFrozenChatIds(null);
+  };
+  const scrollChat=(scrollTop:number)=>{
+    if(scrollTop>8){
+      chatHistoryLock.current=true;
+      freezeChat();
+    }
   };
   useEffect(()=>{if(frozenChatIds===null&&chatScroll.current)chatScroll.current.scrollTop=0;},[frozenChatIds,filtered]);
   const chatFavorites = messages.filter(m=>m.favorite);
@@ -145,7 +159,7 @@ function Directing() {
       <section className={'panel chat-panel ' + (mobilePage !== 'chat' ? 'mobile-hidden' : '')} aria-label="Živý chat"><div className="chat-head"><h2><MessageSquare size={19}/> CHAT</h2><div className="toolbar-actions"><button title={chatPaused ? 'Pokračovat' : 'Pozastavit'} aria-label={chatPaused ? 'Pokračovat' : 'Pozastavit'} className="icon-button" onClick={() => setChatPaused(!chatPaused)}>{chatPaused ? <Play size={17}/> : <Pause size={17}/>}</button><button title="Vyčistit grafiku" aria-label="Vyčistit grafiku – simulace" className="icon-button" disabled><Trash2 size={17}/></button><button title={chatVisible ? 'Skrýt CHAT v grafice' : 'Zobrazit CHAT v grafice'} aria-label="Přepnout viditelnost chatu" className="icon-button" onClick={() => setChatVisible(!chatVisible)}>{chatVisible ? <Eye size={17}/> : <EyeOff size={17}/>}</button></div></div>
       <div className="chat-state"><span className={'state-dot ' + (chatVisible && !chatPaused ? 'ok' : 'warn')}/>{!chatVisible ? 'Grafika CHAT skryta' : chatPaused ? 'Grafika CHAT pozastavena' : 'Automatika CHAT aktivní'}</div>
       <div className="filter-row"><button className={filter === 'all' ? 'selected' : ''} onClick={() => {setFilter('all');returnToNewest();}}>Vše ({messages.length})</button><button className={filter === 'favorites' ? 'selected' : ''} onClick={() => {setFilter('favorites');returnToNewest();}}>Oblíbené ({chatFavorites.length})</button></div>
-      <div className="messages" ref={chatScroll} role="log" aria-label="Zprávy chatu od nejnovějších" onScroll={event=>{if(event.currentTarget.scrollTop>8)freezeChat();}} onFocusCapture={freezeChat}>{visibleMessages.map(m => <article className="message" key={m.id} onPointerEnter={event=>{if(event.pointerType!=='touch')freezeChat();}} onPointerDown={freezeChat}><span className="avatar" aria-hidden="true">{m.author.slice(0,1)}</span><div className="message-content"><div className="message-meta"><strong>{m.author}</strong><time>{m.time}</time>{m.role && <span className="role">Člen</span>}</div><p>{m.text}</p></div><div className="message-actions" role="group" aria-label={`Akce komentáře od ${m.author}`}>{m.featuredShown&&<span className="message-shown-indicator" title="Už zobrazeno ve FEATURED" aria-label="Už zobrazeno ve FEATURED"><Check size={15}/></span>}<button className={m.favorite ? 'is-active' : ''} aria-pressed={m.favorite} aria-label={m.favorite ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'} title={m.favorite ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'} onClick={() => toggleFavorite(m.id)}><Star size={17} fill={m.favorite ? 'currentColor' : 'none'}/></button><button className={activeFeatured === m.id ? 'is-active' : ''} aria-pressed={activeFeatured === m.id} aria-label="Zvýraznit komentář" onClick={() => { showFeatured(m.id); }} title="Zvýraznit komentář (demo)"><Eye size={17}/></button></div></article>)}{visibleMessages.length === 0 && <p className="empty">Žádné zprávy v tomto filtru.</p>}</div>
+      <div className="messages" ref={chatScroll} role="log" aria-label="Zprávy chatu od nejnovějších" onScroll={event=>scrollChat(event.currentTarget.scrollTop)} onFocusCapture={freezeChat} onPointerLeave={event=>leaveChatHover(event.pointerType)}>{visibleMessages.map(m => <article className="message" key={m.id} onPointerEnter={event=>{if(event.pointerType!=='touch')freezeChat();}} onPointerDown={freezeChat}><span className="avatar" aria-hidden="true">{m.author.slice(0,1)}</span><div className="message-content"><div className="message-meta"><strong>{m.author}</strong><time>{m.time}</time>{m.role && <span className="role">Člen</span>}</div><p>{m.text}</p></div><div className="message-actions" role="group" aria-label={`Akce komentáře od ${m.author}`}>{m.featuredShown&&<span className="message-shown-indicator" title="Už zobrazeno ve FEATURED" aria-label="Už zobrazeno ve FEATURED"><Check size={15}/></span>}<button className={m.favorite ? 'is-active' : ''} aria-pressed={m.favorite} aria-label={m.favorite ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'} title={m.favorite ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'} onClick={() => toggleFavorite(m.id)}><Star size={17} fill={m.favorite ? 'currentColor' : 'none'}/></button><button className={activeFeatured === m.id ? 'is-active' : ''} aria-pressed={activeFeatured === m.id} aria-label="Zvýraznit komentář" onClick={() => { showFeatured(m.id); }} title="Zvýraznit komentář (demo)"><Eye size={17}/></button></div></article>)}{visibleMessages.length === 0 && <p className="empty">Žádné zprávy v tomto filtru.</p>}</div>
       <div className="chat-foot"><span>{messages.length} testovacích zpráv{unseenCount>0&&<strong className="chat-unread" role="status"> · {unseenCount} nových</strong>}</span><button onClick={returnToNewest} title="Zobrazit nejnovější zprávy nahoře"><RotateCcw size={14}/> Na začátek</button></div></section>
       <div className={'directing-column ' + (mobilePage !== 'directing' ? 'mobile-hidden' : '')}>
         <DirectingPanels messages={messages} favorites={favorites} shownMessages={shownMessages} featuredId={activeFeatured} onFeature={showFeatured} collapsed={collapsed} toggle={category=>setCollapsed(v=>({...v,[category]:!v[category]}))}/>
