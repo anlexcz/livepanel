@@ -25,7 +25,7 @@ export default function ScenePreview({kind,intro,pause,outro,elapsed,duration,ba
   const outroPhase=elapsed<6?'logo':elapsed<12?'guests':elapsed<18?'socials':elapsed<27?'supporters':'end';
   const introOpening=Math.min(1,Math.max(0,(elapsed-1.5)/1.3));
   const introPosition=Math.min(100,Math.max(0,(elapsed-1.5)/18.5*100));
-  return <div className={'lp-preview lp-preview-'+background} aria-label="Samostatný lokální grafický náhled scény">
+  return <div className={'lp-preview lp-preview-'+background+(playing?'':' scene-preview-paused')} aria-label="Samostatný lokální grafický náhled scény">
     {kind==='break'&&<div aria-hidden="true" className={'scene-glow scene-glow-'+pause.background}/>}
     <div className={'scene-art scene-art-'+kind+' '+(kind==='intro'?'scene-intro-'+introPhase:'')}>
       {kind==='intro'&&<div className="scene-intro-body" style={introPhase==='opening'?{opacity:introOpening,transform:'scale('+(0.94+0.06*introOpening)+')'}:undefined}>
