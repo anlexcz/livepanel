@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, EyeOff, List, Pause, Play, Plus, RotateCcw, SkipForward, Star, Type, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Check, ChevronDown, ChevronUp, Clock3, EyeOff, List, Pause, Pencil, Play, Plus, RotateCcw, SkipForward, Star, Trash2, Type, X, Zap } from 'lucide-react';
 import { Buttons, Empty, PanelButton, Status } from '../components/Ui';
 import { initialEditorial, initialEvents, initialTicker, type EditorialItem, type EventItem, type TickerItem } from '../mock/directing';
 import type { Category, Message } from '../mock/data';
@@ -26,6 +26,19 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   const [tickerCurrent,setTickerCurrent]=useState<string|null>(null);
   const [tickerEdit,setTickerEdit]=useState<string|null>(null);
   const [tickerDraft,setTickerDraft]=useState('');
+  const [tickerLibraryOpen,setTickerLibraryOpen]=useState(false);
+  const [tickerTimingOpen,setTickerTimingOpen]=useState(false);
+  const [tickerDuration,setTickerDuration]=useState(20);
+  const [tickerInterval,setTickerInterval]=useState(5);
+  const [tickerDurationCustom,setTickerDurationCustom]=useState(false);
+  const [tickerIntervalCustom,setTickerIntervalCustom]=useState(false);
+  const [tickerPhase,setTickerPhase]=useState<'idle'|'show'|'between'>('idle');
+  const [tickerBatchStart,setTickerBatchStart]=useState<number|null>(null);
+  const [tickerPauseTime,setTickerPauseTime]=useState<number|null>(null);
+  const [tickerNextAt,setTickerNextAt]=useState<number|null>(null);
+  const [tickerEffectiveDuration,setTickerEffectiveDuration]=useState(20);
+  const [tickerEffectiveInterval,setTickerEffectiveInterval]=useState(300);
+  const [tickerCountdown,setTickerCountdown]=useState(20);
   const [editorial,setEditorial]=useState<EditorialItem[]>(initialEditorial);
   const [editorialCurrent,setEditorialCurrent]=useState<EditorialItem|null>(null);
   const [editorialEdit,setEditorialEdit]=useState<string|null>(null);
@@ -37,13 +50,55 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     setEvents(previous=>previous.slice(1));
     setActiveEvent(events[0]||null);
   }
-  function sendTicker(){
+  // Local demo only. Each interval is measured between starts of batches.
+  function stopTicker(){
+    setTickerRunning(false);setTickerCurrent(null);setTickerPhase('idle');
+    setTickerBatchStart(null);setTickerNextAt(null);setTickerPauseTime(null);
+  }
+  function beginTickerBatch(){
     const enabled=tickerItems.filter(t=>t.enabled);
-    if(!enabled.length){setTickerRunning(false);setTickerCurrent(null);return;}
-    const nextIndex=Math.max(-1,enabled.findIndex(t=>t.id===tickerCurrent))+1;
-    if(nextIndex>=enabled.length){setTickerRunning(false);setTickerCurrent(null);return;}
-    setTickerCurrent(enabled[nextIndex].id);
-    setTickerRunning(true);
+    if(!enabled.length){stopTicker();return;}
+    const now=Date.now(),duration=Math.max(1,Math.round(tickerDuration));
+    const interval=Math.max(10,Math.round(tickerInterval*60));
+    setTickerEffectiveDuration(duration);setTickerEffectiveInterval(interval);
+    setTickerBatchStart(now);setTickerPhase('show');setTickerCurrent(enabled[0].id);
+    setTickerNextAt(now+duration*1000);setTickerCountdown(duration);
+    setTickerRunning(true);setTickerPauseTime(null);
+  }
+  function pauseTicker(){
+    if(tickerRunning){setTickerRunning(false);setTickerPauseTime(Date.now());}
+    else if(tickerPhase!=='idle'){
+      const elapsed=Date.now()-(tickerPauseTime||Date.now());
+      if(tickerNextAt!==null)setTickerNextAt(tickerNextAt+elapsed);
+      if(tickerBatchStart!==null)setTickerBatchStart(tickerBatchStart+elapsed);
+      setTickerRunning(true);setTickerPauseTime(null);
+    }
+  }
+  function advanceTicker(){
+    const enabled=tickerItems.filter(t=>t.enabled);
+    const index=enabled.findIndex(t=>t.id===tickerCurrent),now=Date.now();
+    if(index>=0&&index+1<enabled.length){
+      setTickerCurrent(enabled[index+1].id);setTickerNextAt(now+tickerEffectiveDuration*1000);
+      setTickerCountdown(tickerEffectiveDuration);return;
+    }
+    setTickerCurrent(null);setTickerPhase('between');
+    const wait=Math.max(now,(tickerBatchStart||now)+tickerEffectiveInterval*1000);
+    setTickerNextAt(wait);setTickerCountdown(Math.ceil((wait-now)/1000));
+  }
+  useEffect(()=>{
+    if(!tickerRunning||tickerNextAt===null)return;
+    const timer=window.setInterval(()=>{
+      setTickerCountdown(Math.max(0,Math.ceil((tickerNextAt-Date.now())/1000)));
+      if(Date.now()>=tickerNextAt){
+        if(tickerPhase==='between')beginTickerBatch();
+        else if(tickerPhase==='show')advanceTicker();
+      }
+    },250);
+    return ()=>window.clearInterval(timer);
+  },[tickerRunning,tickerNextAt,tickerPhase,tickerCurrent,tickerItems,tickerDuration,tickerInterval,tickerEffectiveDuration,tickerEffectiveInterval,tickerBatchStart]);
+  function sendTicker(){
+    if(tickerPhase==='idle'||tickerPhase==='between')beginTickerBatch();
+    else advanceTicker();
   }
   function startTickerEdit(item?:TickerItem){
     setTickerEdit(item?.id||'new');
