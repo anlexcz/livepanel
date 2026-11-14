@@ -22,7 +22,7 @@ const sections: { id: Section; name: string; icon: typeof Radio }[] = [
   { id: 'settings', name: 'Nastavení', icon: Settings },
 ];
 const sceneActive = (section: Section) => section === 'intro' || section === 'break' || section === 'outro';
-export default function Shell({ children }: { children: (section: Section) => ReactNode }) {
+export default function Shell({ children, production = false }: { children: (section: Section) => ReactNode; production?: boolean }) {
   const [section,setSection]=useState<Section>('live');
   const [open,setOpen]=useState(false);
   const [pending,setPending]=useState<Section|null>(null);
@@ -76,12 +76,18 @@ export default function Shell({ children }: { children: (section: Section) => Re
       <button type="button" className="mobile-menu icon-button" aria-label="Otevřít navigaci" onClick={()=>setOpen(true)}><Menu size={22}/></button>
       <span className="brand"><span className="brand-mark"><img className="brand-logo" src="/livepanel/assets/metrobus-mark-white.png" alt="Metrobus"/></span><span className="brand-title"><span className="brand-live">LIVE</span><span className="brand-panel">PANEL</span></span></span>
       <span className="top-spacer"/>
-      <div className="status-strip" aria-label="Ukázkové provozní stavy">
-        <span title="Relace: demo"><Radio size={16} className="state-ok"/><span>DEMO</span></span>
-        <span title="Collector: simulován"><Activity size={16} className="state-warn"/><span>MOCK</span></span>
-        <span title="OBS: nepřipojeno"><Clapperboard size={16} className="state-error"/><span>OBS offline</span></span>
+      <div className="status-strip" aria-label={production?'Stav rozpracované serverové režie':'Ukázkové provozní stavy'}>
+        {production ? <>
+          <span title="Stav WebSocket připojení se zobrazuje v Živé režii"><Radio size={16} className="state-warn"/><span>SERVER BETA</span></span>
+          <span title="YouTube Collector dosud není implementován"><Activity size={16} className="state-error"/><span>Collector offline</span></span>
+          <span title="OBS overlay dosud není implementován"><Clapperboard size={16} className="state-error"/><span>OBS offline</span></span>
+        </> : <>
+          <span title="Relace: demo"><Radio size={16} className="state-ok"/><span>DEMO</span></span>
+          <span title="Collector: simulován"><Activity size={16} className="state-warn"/><span>MOCK</span></span>
+          <span title="OBS: nepřipojeno"><Clapperboard size={16} className="state-error"/><span>OBS offline</span></span>
+        </>}
       </div>
-      <button type="button" className="operators" title="Testovací operátor, žádné reálné připojení"><Users size={18}/><span>1</span></button>
+      {!production&&<button type="button" className="operators" title="Testovací operátor, žádné reálné připojení"><Users size={18}/><span>1</span></button>}
     </header>
     <main className="main-content">{children(section)}</main>
     {pending&&<div className="lp-modal-backdrop" role="presentation"><div className="lp-modal" role="dialog" aria-modal="true" aria-labelledby="leave-title">
