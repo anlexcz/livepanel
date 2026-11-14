@@ -38,3 +38,13 @@ Vzhled vychází z dokumentu „Metrobus LivePanel – UI/UX Design a chování�
 - [Hlavní koncepce](https://docs.google.com/document/d/1SYBHHQ58sdE3D_rJCb9AjMw0TO9JvJ9G5qU-WEvxd4I/edit)
 - [UI/UX Design](https://docs.google.com/document/d/1erayGTEZqUEs3jQl-8oCz5OItgiqMVyHbkveZpKLQuQ/edit)
 - [Technická architektura](https://docs.google.com/document/d/1I-1_TYF-PH_NHz2NtYZNxhDiBdRsXpBZyOpSMGKi1J8/edit)
+
+
+## Scénické editory – funkční klientský demo náhled (14. 11. 2026)
+
+- **INTRO**: jeden volitelný název, lokální animace s 1,5s prodlevou, cca 20s sekvencí a tichou vizuální smyčkou. Hudební synchronizace a produkční OBS overlay nejsou součástí prototypu.
+- **BREAK**: dvě skutečně pohybující se CSS glow pozadí, nadpis, přepínač doplňujícího textu, lokální odpočet pevnou délkou nebo do dnešního cílového času, pauza/pokračování/reset/konec a text po dokončení. „Obnovit výchozí“ mění jen rozepsanou konfiguraci.
+- **OUTRO**: rozšiřitelný registr šablon s jedinou ověřenou referencí Pokec z `anlexcz/studio/outro`; vlastní pole účinkujících, textů, odkazů, hlášek a Forendors. Lokální ukázková sekvence a časová osa **nejsou převzatý produkční renderer**. CSV načítá pouze jména do paměti stránky, bez odeslání či perzistence.
+- Nastavení se po explicitním kliknutí `Uložit (demo)` pro účely testování ukládá pouze do `localStorage` tohoto prohlížeče; neexistuje synchronizace operátorů, server, databáze ani automatická aktivace OBS. Nastavení jednotlivých editorů jsou samostatná.
+- Na desktopu mají nastavení a náhled oddělený svislý scroll a přetahovatelný poměr; mobil zobrazuje náhled nad formulářem. Při neuložených změnách se aktivuje ochrana před opuštěním.
+
