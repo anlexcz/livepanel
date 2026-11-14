@@ -48,3 +48,7 @@ Vzhled vychází z dokumentu „Metrobus LivePanel – UI/UX Design a chování�
 - Nastavení se po explicitním kliknutí `Uložit (demo)` pro účely testování ukládá pouze do `localStorage` tohoto prohlížeče; neexistuje synchronizace operátorů, server, databáze ani automatická aktivace OBS. Nastavení jednotlivých editorů jsou samostatná.
 - Na desktopu mají nastavení a náhled oddělený svislý scroll a přetahovatelný poměr; mobil zobrazuje náhled nad formulářem. Při neuložených změnách se aktivuje ochrana před opuštěním.
 
+
+## Backend Foundation (vývoj)
+
+Nový backend je nezávislý na GitHub Pages. Postup lokálního spuštění a omezení najdeš v [server/README.md](server/README.md). Backend se dosud nepoužívá v React UI, OBS ani na VPS.
