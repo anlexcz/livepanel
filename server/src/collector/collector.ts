@@ -83,7 +83,7 @@ export class YouTubeCollector {
   private async run(liveChatId:string,signal:AbortSignal):Promise<void> {
     const pause=this.options.delay??abortableDelay;
     const threshold=Math.max(1,this.options.streamFailuresBeforeFallback??3);
-    const retryPolls=Math.max(1,this.options.fallbackPollsBeforeRetry??5);
+    const retryPolls=Math.max(1,this.options.fallbackPollsBeforeRetry??12);
     let method:CollectorMethod='streamList';
     let failures=0;
     let streamToken:string|undefined;

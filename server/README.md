@@ -30,3 +30,7 @@ When `LIVEPANEL_PUBLIC_ORIGIN=https://...` is provided, the backend enables `POS
 ## Account Management & Security Hardening (PR #31)
 
 Lokální správa a bezpečnostní hranice: viz [ACCOUNT_MANAGEMENT.md](ACCOUNT_MANAGEMENT.md). Přibyla samoobslužná změna hesla `POST /api/auth/password` (vyžaduje předchozí heslo a přesný Origin); po změně je nutné nové přihlášení na všech zařízeních. Admin operace založení/reset/deaktivace účtů **nejsou veřejnými API endpointy**.
+
+## YouTube Collector Foundation (PR #35)
+
+Modul `src/collector/` poskytuje testovatelný základ normalizace dat a přepínání zdrojů `streamList` → reconnect → `list`. Přehled implementace, omezení a práce s tokeny viz [YOUTUBE_COLLECTOR_FOUNDATION.md](YOUTUBE_COLLECTOR_FOUNDATION.md). **Sběr zatím není spuštěný v aplikaci, chybí gRPC streamList, OAuth a skutečný archiv/overlay.**
