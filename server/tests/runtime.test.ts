@@ -43,7 +43,7 @@ test('FEATURED timeout is committed and broadcast once, without a new command ro
   assert.equal((active.timer as FakeTimer|null)?.delay,1000);
   assert.equal(store.read().revision,2);
   advance(1000);
-  const callback=(active.timer as FakeTimer).callback;
+  const callback=(active.timer as unknown as FakeTimer).callback;
   callback();
   assert.equal(store.read().state.featured.messageId,null);
   assert.equal(store.read().revision,3);
