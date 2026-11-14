@@ -16,6 +16,10 @@ function Directing() {
     try { const value=JSON.parse(sessionStorage.getItem('livepanel:demo-featured-shown') || '[]'); if (Array.isArray(value)) shown=value.filter((id): id is string => typeof id==='string'); } catch { /* fresh demo session */ }
     return initialMessages.map(m=>({...m,featuredShown:shown.includes(m.id)}));
   });
+  useEffect(()=>{
+    try { sessionStorage.setItem('livepanel:demo-featured-shown',JSON.stringify(messages.filter(m=>m.featuredShown).map(m=>m.id))); }
+    catch { /* temporary simulation only */ }
+  },[messages]);
   const [filter, setFilter] = useState<Filter>('all');
   const [mobilePage, setMobilePage] = useState<ActivePage>('chat');
   const [collapsed, setCollapsed] = useState<Record<Category, boolean>>({ FEATURED: false, EVENT: false, TICKER: false, EDITORIAL: false });
@@ -105,11 +109,7 @@ function Directing() {
     if (id !== null && !messages.some(m=>m.id===id)) return;
     // Demo: the actual overlay display begins immediately after the local show command.
     // Production must set featuredShown only after the server confirms display start.
-    if (id !== null) setMessages(previous=>{
-      const next=previous.map(m=>m.id===id?{...m,featuredShown:true}:m);
-      try { sessionStorage.setItem('livepanel:demo-featured-shown',JSON.stringify(next.filter(m=>m.featuredShown).map(m=>m.id))); } catch { /* volatile demo only */ }
-      return next;
-    });
+    if (id !== null) setMessages(previous=>previous.map(m=>m.id===id?{...m,featuredShown:true}:m));
     setActiveFeatured(id);
   }
   function toggleFavorite(id: string) { setMessages(previous => previous.map(m => m.id === id ? { ...m, favorite: !m.favorite } : m)); }
