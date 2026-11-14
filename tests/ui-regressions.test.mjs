@@ -90,3 +90,19 @@ test('settings and diagnostics reuse shared components without changing content 
     assert.ok(settings.includes('title="' + label + '"'));
   }
 });
+
+test('archive metadata stays grouped without clipping full comment content', () => {
+  const archive = read('src/pages/Archive.tsx');
+  const css = read('src/pages/pages.css');
+  assert.ok(archive.includes('className="lp-archive-meta"'));
+  assert.ok(archive.includes('<p>{row.content}</p>'));
+  assert.match(css, /\.lp-archive-entry\{[^}]*flex-direction:column/);
+  assert.match(css, /\.lp-archive-meta\{[^}]*flex-wrap:wrap/);
+});
+
+test('settings label both layout modes and identify demo-only spacing toggle', () => {
+  const settings = read('src/pages/Settings.tsx');
+  assert.ok(settings.includes('2 sloupce 60/40 · 3 sloupce 25/35/40'));
+  assert.ok(settings.includes('zatím nemění skutečné rozestupy'));
+  assert.ok(settings.includes('ukládá se místně v prohlížeči'));
+});
