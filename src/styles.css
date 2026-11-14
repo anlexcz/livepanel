@@ -338,3 +338,16 @@ body{background:var(--lp-bg)}
   .lp-editorial-row .lp-row-actions .lp-btn{width:54px;min-width:54px;font-size:11px;padding:4px}
   .lp-editorial-row .lp-icon-action{width:32px;height:36px}
 }
+
+/* TICKER status is constant-height in stopped, playing and paused modes.
+   Countdown lives inside its existing first line, so the controls and drawers do not jump. */
+.lp-ticker-state{min-height:64px}
+.lp-ticker-state-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:18px}
+.lp-ticker-state-heading .lp-ticker-countdown{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;color:#aaa;font-size:12px;font-variant-numeric:tabular-nums}
+.lp-ticker-state p{margin-top:5px}
+.lp-ticker-controls .lp-button-row>.lp-btn:first-child{min-width:128px}
+.lp-ticker-controls .lp-button-row>.lp-btn:nth-child(2){min-width:104px}
+@media(max-width:490px){
+ .lp-ticker-controls .lp-button-row>.lp-btn:first-child{min-width:0}
+ .lp-ticker-controls .lp-button-row>.lp-btn:nth-child(2){min-width:0}
+}
