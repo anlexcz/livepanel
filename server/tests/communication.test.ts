@@ -74,3 +74,46 @@ test('public projection excludes stream and message/event identifiers',()=>fixtu
   assert.equal(projection.state.featured.active,true);
   assert.equal(projection.state.event.paused,true);
 }));
+
+test('dedup survives reopening the SQLite file (a process restart)',()=>{
+  const dir=mkdtempSync(join(tmpdir(),'mb-command-restart-'));
+  const path=join(dir,'state.sqlite');
+  let db=openDatabase(path);
+  const start=command('command-restart-0001','session.start',{streamId:'synthetic'},0);
+  try {
+    let store=new ProductionStore(db,()=>1000);
+    const original=new CommandProcessor(db,store,()=>1000).execute(start);
+    assert.equal(original.revision,1);
+    db.close();
+    db=openDatabase(path);
+    store=new ProductionStore(db,()=>2000);
+    const processor=new CommandProcessor(db,store,()=>2000);
+    assert.deepEqual(processor.execute(start),original);
+    assert.equal(store.read().revision,1);
+    assert.equal(processor.execute(command('command-restart-0001','session.start',{streamId:'other'},0)).error,'COMMAND_ID_REUSED');
+    assert.equal(store.read().streamId,'synthetic');
+  } finally {
+    if(db.open) db.close();
+    rmSync(dir,{recursive:true,force:true});
+  }
+});
+
+test('incidental FEATURED expiry produces one full-state UPDATE at one revision',()=>{
+  const dir=mkdtempSync(join(tmpdir(),'mb-command-expiry-'));
+  const db=openDatabase(join(dir,'state.sqlite'));
+  let now=1000;
+  try {
+    const store=new ProductionStore(db,()=>now);
+    const processor=new CommandProcessor(db,store,()=>now);
+    const updates:Array<{category:string;revision:number}>=[];
+    processor.subscribe(update=>updates.push({category:update.category,revision:update.revision}));
+    processor.execute(command('command-expiry-0001','session.start',{streamId:'synthetic'}));
+    processor.execute(command('command-expiry-0002','featured.show',{messageId:'msg',expiresAtMs:1500}));
+    now=2000;
+    processor.execute(command('command-expiry-0003','chat.setMode',{mode:'enabled'}));
+    assert.equal(store.read().state.featured.messageId,null);
+    assert.deepEqual(updates,[{category:'session',revision:1},{category:'featured',revision:2},{category:'session',revision:3}]);
+  } finally {
+    db.close();rmSync(dir,{recursive:true,force:true});
+  }
+});
