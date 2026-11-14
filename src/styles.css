@@ -403,3 +403,13 @@ body{background:var(--lp-bg)}
  .lp-module-disclosure,.lp-collapse-chevron,.lp-motion-tabs button,.lp-motion-tabs::after,.lp-btn,.small-button,.lp-icon-action,.panel-toggle,.lp-inline-disclosure,.lp-timing-choices button,.compact-item,.message-actions button{transition:none!important}
  .lp-tab-content,.lp-content-change,.lp-editorial-status-copy,.lp-save-flash{animation:none!important}
 }
+
+/* CHAT newest-first scroll freeze: the footer never grows or moves while new items arrive. */
+.chat-foot{min-height:35px;gap:12px}
+.chat-foot>span{min-width:0}
+.chat-unread{color:#87cefa;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.chat-foot button{min-height:30px;white-space:nowrap;flex:none}
+.message{scroll-margin-top:8px}
+.message:hover,.message:focus-within{background:#222a2f}
+.message-actions{align-self:center}
+@media(prefers-reduced-motion:reduce){.message:hover,.message:focus-within{transition:none}}
