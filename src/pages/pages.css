@@ -185,7 +185,7 @@
 .scene-art-intro{background:linear-gradient(135deg,#070707,#111719,#080808)}
 .scene-intro-delay .scene-intro-body{opacity:0}
 .scene-intro-idle .scene-intro-body{opacity:1}
-.scene-intro-opening .scene-intro-body{animation:scene-intro-reveal 1.3s both}
+.scene-intro-opening .scene-intro-body{animation:none}
 .scene-intro-loop .scene-intro-body{animation:scene-intro-idle 8s ease-in-out infinite alternate}
 .scene-intro-title,.scene-break-body>strong{font:700 clamp(17px,2.1vw,38px)/1.3 Montserrat,sans-serif;max-width:90%;overflow-wrap:anywhere}
 .scene-intro-line{position:absolute;top:19%;height:2px;max-width:72%;background:linear-gradient(90deg,transparent,#87cefa,transparent);filter:drop-shadow(0 0 8px #87cefa);transition:width .1s linear}
@@ -228,3 +228,5 @@
 .scene-outro-egg{max-width:85%;font:500 clamp(8px,.9vw,13px)/1.4 Inter,sans-serif;color:#b6c8d2;text-align:center}
 
 .lp-preview:has(.scene-glow-light-glow) .scene-break-body .scene-wordmark{filter:brightness(0)}
+
+.scene-preview-paused .scene-glow,.scene-preview-paused .scene-intro-body,.scene-preview-paused .scene-outro-detail,.scene-preview-paused .scene-outro-end{animation-play-state:paused!important}
