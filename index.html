@@ -7,94 +7,14 @@
   <link rel="icon" type="image/png" href="/livepanel/assets/metrobus-favicon.png">
   <title>Metrobus LivePanel – UI prototyp</title>
   <style>
-    /* Fallback for Pages branch-source publishing; React replaces #root when the Vite bundle loads. */
-    :root{font-family:Inter,Arial,sans-serif;color:#eee;background:#202020;font-size:14px}
-    *{box-sizing:border-box}body{margin:0}button{font:inherit;cursor:pointer}[hidden]{display:none!important}
-    .fallback-app{display:grid;grid-template-columns:52px minmax(0,1fr);grid-template-rows:48px minmax(0,1fr);height:100vh}
-    .fallback-rail{grid-row:1/3;background:#303030;padding:10px 6px;color:#87cefa;display:flex;align-items:center;flex-direction:column;gap:20px;font-size:20px}
-    .fallback-top{display:flex;align-items:center;gap:14px;background:#303030;padding:0 16px}
-    .fallback-brand{color:#87cefa;font-weight:700;letter-spacing:1px}.fallback-brand span{color:#eee}
-    .fallback-state{margin-left:auto;font-size:12px;color:#ffc107}
-    .fallback-main{grid-column:2;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px}
-    .fallback-alert{background:#383838;color:#ffc107;padding:8px 12px;font-size:12px}
-    .fallback-title{font-size:23px;font-weight:600;margin:0}
-    .fallback-tabs{display:none}
-    .fallback-layout{display:grid;grid-template-columns:60% minmax(0,1fr);gap:8px;min-height:0;flex:1}
-    .fallback-chat,.fallback-side>section{background:#303030;min-width:0}
-    .fallback-chat{display:flex;flex-direction:column;overflow:hidden}
-    .fallback-head{display:flex;justify-content:space-between;align-items:center;padding:12px;font-weight:600}
-    .fallback-actions{display:flex;gap:4px}
-    .fallback-actions button,.fallback-filter button,.fallback-small{border:0;background:#383838;color:#87cefa;padding:7px 10px}
-    .fallback-filter{display:flex;gap:6px;background:#383838;padding:8px 12px}
-    .fallback-messages{overflow-y:auto;flex:1}
-    .fallback-message{padding:12px;display:flex;gap:10px;overflow-wrap:anywhere}
-    .fallback-message:hover{background:#383838}
-    .fallback-avatar{background:#454545;width:30px;height:30px;flex:none;text-align:center;line-height:30px}
-    .fallback-message strong{color:#87cefa}.fallback-message p{margin:3px 0 0}
-    .fallback-message small{color:#aaa;margin-left:6px}
-    .fallback-side{display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0}
-    .fallback-side>section{flex:none}
-    .fallback-panelhead{width:100%;background:none;border:0;color:#fff;display:flex;align-items:center;justify-content:space-between;text-align:left;font-weight:600;font-size:15px;padding:12px}
-    .fallback-summary{color:#bbb;font-size:12px;font-weight:400;margin-left:auto;margin-right:12px}
-    .fallback-body{padding:0 12px 12px}.fallback-value{background:#383838;padding:10px;font-size:13px;color:#ddd;margin-bottom:8px}
-    .fallback-foot{padding:8px 12px;background:#383838;font-size:12px;color:#aaa}
-    @media(max-width:760px){
-      .fallback-app{grid-template-columns:1fr}.fallback-rail{display:none}
-      .fallback-top,.fallback-main{grid-column:1}
-      .fallback-brand{font-size:12px}.fallback-main{padding:8px}
-      .fallback-tabs{display:flex;background:#303030}.fallback-tabs button{flex:1;padding:12px;border:0;background:none;color:#aaa}
-      .fallback-tabs button.active{color:#87cefa;border-bottom:2px solid #87cefa}
-      .fallback-layout{display:flex;flex-direction:column}.fallback-chat,.fallback-side{flex:1;min-height:0}
-      .fallback-layout[data-tab="chat"] .fallback-side,.fallback-layout[data-tab="directing"] .fallback-chat{display:none}
-      .fallback-message p{font-size:16px}
-    }
+    /* Only the neutral page background is displayed while React and fonts load.
+       Never render a second, outdated administration UI before hydration. */
+    html,body{margin:0;min-height:100%;background:#0b0b0b}
   </style>
 </head>
 <body>
-  <div id="root">
-    <div class="fallback-app">
-      <aside class="fallback-rail" aria-label="Navigace"><span>☰</span><span>▣</span><span>◷</span><span>⚙</span></aside>
-      <header class="fallback-top"><span class="fallback-brand">METROBUS <span>LIVEPANEL</span></span><span class="fallback-state">● DEMO · OBS offline</span></header>
-      <main class="fallback-main">
-        <div class="fallback-alert">DEMO REŽIM – pouze vizuální prototyp. Bez YouTube API, serveru a OBS.</div>
-        <h1 class="fallback-title">Živá režie</h1>
-        <div class="fallback-tabs"><button class="active" data-tab="chat">CHAT</button><button data-tab="directing">REŽIE</button></div>
-        <div class="fallback-layout" data-tab="chat">
-          <section class="fallback-chat">
-            <div class="fallback-head">CHAT <div class="fallback-actions"><button type="button" title="Ukázka pozastavení" id="fallback-pause">Ⅱ Pozastavit</button></div></div>
-            <div class="fallback-filter"><button type="button" id="fallback-all">Vše</button><button type="button" id="fallback-favs">Oblíbené</button></div>
-            <div class="fallback-messages" id="fallback-messages">
-              <article class="fallback-message" data-fav="no"><div class="fallback-avatar">P</div><div><strong>Petr Novotný</strong><small>19:00</small><p>Zdravím všechny, těším se na dnešní vysílání!</p></div></article>
-              <article class="fallback-message" data-fav="yes"><div class="fallback-avatar">D</div><div><strong>Dopravní nadšenec</strong><small>19:01 · ★</small><p>Budete řešit i změny v prosincovém grafikonu?</p></div></article>
-              <article class="fallback-message" data-fav="no"><div class="fallback-avatar">K</div><div><strong>Kateřina H.</strong><small>19:02</small><p>Ta nová tramvaj vypadá fakt zajímavě.</p></div></article>
-              <article class="fallback-message" data-fav="yes"><div class="fallback-avatar">J</div><div><strong>Jan Šimek</strong><small>19:03 · ★</small><p>Jak to bude s přestupy na Smíchově?</p></div></article>
-              <article class="fallback-message" data-fav="no"><div class="fallback-avatar">M</div><div><strong>Metrofan</strong><small>19:04</small><p>Díky za vysvětlení, zdravím režii.</p></div></article>
-            </div>
-            <div class="fallback-foot">Ukázkový chat · pouze lokální test</div>
-          </section>
-          <div class="fallback-side">
-            <section><button class="fallback-panelhead" aria-expanded="true">FEATURED <span class="fallback-summary">2 oblíbené komentáře</span>⌃</button><div class="fallback-body"><div class="fallback-value">Momentálně není zvýrazněn žádný komentář.</div><button class="fallback-small" type="button" disabled>Vybrat komentář (další etapa)</button></div></section>
-            <section><button class="fallback-panelhead" aria-expanded="true">EVENT <span class="fallback-summary">2 čekající události</span>⌃</button><div class="fallback-body"><div class="fallback-value">Super Chat · Dopravák · 100 Kč</div><div class="fallback-value">Nové členství · Martina</div></div></section>
-            <section><button class="fallback-panelhead" aria-expanded="true">TICKER <span class="fallback-summary">Automatika pozastavena</span>⌃</button><div class="fallback-body"><div class="fallback-value">Připravované změny grafikonu</div></div></section>
-            <section><button class="fallback-panelhead" aria-expanded="true">EDITORIAL <span class="fallback-summary">Neaktivní</span>⌃</button><div class="fallback-body"><div class="fallback-value">Žádný aktivní titulek.</div></div></section>
-          </div>
-        </div>
-      </main>
-    </div>
-  </div>
-  <script>
-    // Only used if GitHub Pages mistakenly serves source HTML instead of built Vite assets.
-    document.querySelectorAll('.fallback-tabs button').forEach(button=>button.addEventListener('click',()=>{
-      document.querySelector('.fallback-layout').dataset.tab=button.dataset.tab;
-      document.querySelectorAll('.fallback-tabs button').forEach(b=>b.classList.toggle('active',b===button));
-    }));
-    document.querySelectorAll('.fallback-panelhead').forEach(button=>button.addEventListener('click',()=>{
-      const body=button.nextElementSibling;body.hidden=!body.hidden;button.setAttribute('aria-expanded',String(!body.hidden));
-    }));
-    document.getElementById('fallback-favs').addEventListener('click',()=>document.querySelectorAll('.fallback-message').forEach(x=>x.hidden=x.dataset.fav!=='yes'));
-    document.getElementById('fallback-all').addEventListener('click',()=>document.querySelectorAll('.fallback-message').forEach(x=>x.hidden=false));
-    document.getElementById('fallback-pause').addEventListener('click',event=>{event.currentTarget.textContent=event.currentTarget.textContent.includes('Pozastavit')?'▶ Pokračovat':'Ⅱ Pozastavit';});
-  </script>
+  <div id="root"></div>
+  <noscript>Metrobus LivePanel vyžaduje povolený JavaScript.</noscript>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
