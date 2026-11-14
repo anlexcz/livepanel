@@ -18,7 +18,7 @@ export type ProductionView = {
 };
 export type ProductionAction =
   |'session.start'|'session.stop'|'chat.setMode'
-  |'featured.hide'|'editorial.hide';
+  |'featured.hide'|'editorial.hide'|'event.pause'|'event.resume';
 export class ProductionCommandError extends Error {
   constructor(public readonly code:string) { super(code); }
 }
@@ -166,7 +166,7 @@ export class ProductionClient {
     let next:ProductionSnapshot|null=null;
     if(raw.category==='session'&&record(raw.value)) {
       next=parseSnapshot({...current,streamId:raw.value.streamId,state:raw.value.state,revision:raw.revision});
-    } else if(['chat','featured','editorial'].includes(raw.category)&&record(raw.value)) {
+    } else if(['chat','featured','editorial','event'].includes(raw.category)&&record(raw.value)) {
       next=parseSnapshot({...current,revision:raw.revision,
         state:{...current.state,[raw.category]:raw.value}});
     }

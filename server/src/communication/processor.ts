@@ -61,7 +61,12 @@ export class CommandProcessor {
         ...current.state.event, queue: [...current.state.event.queue, eventId],
       }},
     }), before.revision);
-    const update = updateFromSnapshot('event',after);
+    // Store.update can also reconcile a FEATURED deadline in the same commit.
+    // A full state UPDATE is required to avoid leaving other categories stale.
+    const eventCategory:Update['category'] =
+      JSON.stringify(before.state.featured)!==JSON.stringify(after.state.featured)
+        ? 'session' : 'event';
+    const update = updateFromSnapshot(eventCategory,after);
     for (const subscriber of this.subscribers) {
       try { subscriber(update); } catch { /* persistence already committed */ }
     }

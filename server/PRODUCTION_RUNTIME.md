@@ -16,4 +16,4 @@
 - This PR does not claim EVENT is fully functional: active-item playback, duration, queue completion, observer acknowledgement and archive handling remain to be implemented.
 
 ## Boundaries
-Only backend files are changed. No production server or domain migration, no change to GitHub Pages UI. Full YouTube reference validation, retention, live Collector, OBS Browser Source, and verified renderer visibility are still missing.
+The authenticated React production view understands EVENT UPDATE revisions and offers manual pause/resume controls; the public GitHub Pages mock layout remains unchanged. No production server or domain migration. Full YouTube reference validation, retention, live Collector, OBS Browser Source, and verified renderer visibility are still missing.
