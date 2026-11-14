@@ -3,7 +3,7 @@ import type Database from 'better-sqlite3';
 import { initialProductionState } from '../production/state.js';
 import { ProductionStore, RevisionConflictError, type ProductionSnapshot } from '../production/store.js';
 import {
-  categoryFor, decodeCommand, updateFromSnapshot,
+  decodeCommand, updateFromSnapshot,
   type Command, type Result, type Update,
 } from './protocol.js';
 
@@ -42,6 +42,7 @@ export class CommandProcessor {
       action:command.action, payload:command.payload, expectedRevision:command.expectedRevision ?? null,
     })).digest('hex');
     let changedSnapshot: ProductionSnapshot | null = null;
+    let beforeSnapshot: ProductionSnapshot | null = null;
     try {
       const transaction = this.db.transaction((): Result => {
         const previous = this.db.prepare('SELECT request_hash, result_json FROM production_commands WHERE command_id = ?')
@@ -53,10 +54,12 @@ export class CommandProcessor {
           return JSON.parse(previous.result_json) as Result;
         }
 
-        const currentRevision = this.store.read().revision;
+        const before = this.store.read();
+        const currentRevision = before.revision;
         let result: Result;
         try {
           const after = this.apply(command);
+          beforeSnapshot = before;
           changedSnapshot = after;
           result = {type:'RESULT',commandId,ok:true,revision:after.revision};
         } catch (error) {
@@ -73,10 +76,24 @@ export class CommandProcessor {
         return result;
       });
       const result = transaction();
-      if (changedSnapshot && result.ok) {
-        const update = updateFromSnapshot(categoryFor(command.action), changedSnapshot);
-        for (const subscriber of this.subscribers) {
-          try { subscriber(update); } catch { /* committed mutation must not fail due to subscriber */ }
+      if (changedSnapshot && beforeSnapshot && result.ok) {
+        const before: ProductionSnapshot = beforeSnapshot;
+        const after: ProductionSnapshot = changedSnapshot;
+        const categories: Update['category'][] = [];
+        if (before.streamId !== after.streamId) {
+          categories.push('session');
+        } else {
+          for (const category of ['chat','featured','editorial'] as const) {
+            if (JSON.stringify(before.state[category]) !== JSON.stringify(after.state[category])) {
+              categories.push(category);
+            }
+          }
+        }
+        for (const category of categories) {
+          const update = updateFromSnapshot(category, after);
+          for (const subscriber of this.subscribers) {
+            try { subscriber(update); } catch { /* commit has already succeeded */ }
+          }
         }
       }
       return result;
