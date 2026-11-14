@@ -26,7 +26,8 @@ export function createApp(db: Database.Database, logLevel = 'info') {
 
   app.setErrorHandler((error, _request, reply) => {
     app.log.error({ err: error }, 'HTTP request failed');
-    reply.code(error.statusCode && error.statusCode >= 400 && error.statusCode < 500 ? error.statusCode : 500)
+    const status = typeof error === 'object' && error !== null && 'statusCode' in error && typeof error.statusCode === 'number' ? error.statusCode : 500;
+    reply.code(status >= 400 && status < 500 ? status : 500)
       .send({ error: 'request_failed' });
   });
   return app;
