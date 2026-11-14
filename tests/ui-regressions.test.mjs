@@ -46,3 +46,23 @@ test('new mock event, TICKER and EDITORIAL IDs cannot collide within a milliseco
     assert.ok(!source.includes("'" + prefix + "'+Date.now()"));
   }
 });
+
+test('secondary admin pages use existing shared design tokens', () => {
+  const palette = read('src/styles.css');
+  const pages = read('src/pages/pages.css');
+  const definitions = new Set([...palette.matchAll(/(--lp-[\w-]+)\s*:/g)].map(match => match[1]));
+  for (const token of ['--lp-accent','--lp-accent-hover','--lp-selection-bg','--lp-danger-hover',
+                       '--lp-space-2','--lp-space-3']) {
+    assert.ok(definitions.has(token), token + ' must be declared in shared styles');
+    assert.ok(pages.includes('var(' + token + ')'), token + ' must be consumed on subpages');
+  }
+  const references = [...pages.matchAll(/var\((--lp-[\w-]+)/g)].map(match => match[1]);
+  for (const token of references) assert.ok(definitions.has(token), token + ' has no definition');
+});
+
+test('secondary page focus and active tabs retain the Metrobus accent', () => {
+  const pages = read('src/pages/pages.css');
+  assert.match(pages, /\.lp-settings-menu button\.is-selected\{box-shadow:inset 2px 0 var\(--lp-accent\)\}/);
+  assert.match(pages, /\.lp-segment button\.is-selected\{box-shadow:inset 0 -2px var\(--lp-accent\)\}/);
+  assert.match(pages, /\.lp-disclosure summary:focus-visible/);
+});
