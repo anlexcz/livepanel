@@ -1,0 +1,43 @@
+name: Validate Backend Foundation
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: npm ci --prefix server --no-audit --no-fund
+      - run: npm run backend:build
+      - name: HTTP smoke test (independent server process)
+        run: |
+          set -euo pipefail
+          DB_PATH="$(mktemp -d)"
+          LIVEPANEL_DB_PATH="$DB_PATH/livepanel.sqlite" npm run backend:start > "$RUNNER_TEMP/backend-smoke.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true; wait "$SERVER_PID" 2>/dev/null || true; rm -rf "$DB_PATH"' EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:3100/health > "$RUNNER_TEMP/health.json"; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat "$RUNNER_TEMP/backend-smoke.log"
+            exit 1
+          fi
+          node -e "const h=require(process.env.RUNNER_TEMP+'/health.json'); if(h.status!=='ok'||h.service!=='metrobus-livepanel') process.exit(1)"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3100/admin)" = "404"
+      - run: npm run backend:test
+      - run: npm run test
+      - run: npm run build

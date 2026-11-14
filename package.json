@@ -7,7 +7,10 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "test": "node --test tests/*.test.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backend:build": "npm --prefix server run build",
+    "backend:start": "npm --prefix server run start",
+    "backend:test": "npm --prefix server run test"
   },
   "dependencies": {
     "@fontsource/audiowide": "^5.2.8",

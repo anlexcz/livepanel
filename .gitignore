@@ -4,3 +4,9 @@ dist/
 .env.*
 !.env.example
 *.local
+
+server/dist/
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
