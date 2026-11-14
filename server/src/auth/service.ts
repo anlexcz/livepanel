@@ -9,6 +9,7 @@ type UserRow = { id:number; username:string; password_hash:string; shared:number
 type SessionRow = { id:string; user_id:number; username:string; shared:number; active:number; expires_at_ms:number; revoked_at_ms:number|null };
 const passwordOptions = { type: argon2.argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 } as const;
 const tokenDigest = (token:string) => createHash('sha256').update(token).digest('hex');
+let dummyHashPromise:Promise<string>|undefined;
 
 export class AuthService {
   constructor(private readonly db: Database.Database, private readonly clock:()=>number=Date.now) {}
@@ -28,8 +29,8 @@ export class AuthService {
     const row=this.db.prepare('SELECT id,username,password_hash,shared,active FROM users WHERE username=?')
       .get(username) as UserRow|undefined;
     // Do comparable password hashing work even for unknown users to reduce enumeration signals.
-    const dummyHash='$argon2id$v=19$m=19456,t=2,p=1$YWJjZGVmZ2hpamtsbW5vcA$b8DNhyHNCeKz7VyBYBaEbIvLk+N90pN1xaVDN0RbHvM';
-    const valid=await argon2.verify(row?.password_hash??dummyHash,password).catch(()=>false);
+    dummyHashPromise??=argon2.hash('synthetic-nonaccount-password',passwordOptions);
+    const valid=await argon2.verify(row?.password_hash??await dummyHashPromise,password).catch(()=>false);
     if(!row || !row.active || !valid) return null;
     const token=randomBytes(32).toString('base64url');
     const id=randomUUID();
