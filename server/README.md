@@ -1,32 +1,28 @@
 # Metrobus LivePanel – server
 
-Node.js 22 / Fastify / SQLite. The backend is separate from the GitHub Pages frontend.
+Node.js 22 / Fastify / SQLite. The backend and GitHub Pages UI remain independent.
 
-From repository root:
 ```sh
 npm ci
 npm ci --prefix server
 npm run backend:build
 npm run backend:test
 npm run backend:start
-# GET http://127.0.0.1:3100/health
 ```
 
-GitHub Actions validates the backend and starts a process for an independent HTTP smoke test.
-Environment variables are documented in `../.env.example`; they are read from the process environment (no implicit .env loader).
-The server binds only to loopback by default. It is **not** ready for public exposure: no operator authentication, YouTube collector or production OBS overlay exists.
+Health: `http://127.0.0.1:3100/health`. Configuration is via process environment, see `../.env.example`. By default the backend only listens on loopback and authenticated routes are **disabled** unless `LIVEPANEL_PUBLIC_ORIGIN` is configured as the exact HTTPS browser origin.
 
-## SQLite and migrations
-Default path: `./data/livepanel.sqlite` (relative to the working directory). WAL and foreign key enforcement are enabled. Never commit live databases, WAL/SHM files, or credentials. Applied migrations are checked by checksum; already released migrations are immutable.
+## Production State and WebSocket
+One SQLite row stores the shared Production State (CHAT, FEATURED, EVENT, TICKER, EDITORIAL). Production State modifications and command-result deduplication are transactionally committed. The developer-only WebSockets are disabled by default and must never be exposed through a proxy.
 
-## Production State
-One SQLite row stores the common JSON Production State for CHAT, FEATURED, EVENT, TICKER and EDITORIAL. `ProductionStore` atomically saves revisions and clears expired FEATURED on restart. Active stream is nullable and clearSession does not reset the monotonic revision.
+## Authentication Foundation (PR #30)
+Migration 004 introduces `users` and separate `login_sessions`. There is **no public registration**. Account creation is local-only, via `AuthService.createUser` or the provisioning CLI (password read from stdin, never argv):
+```sh
+# Run from repo root; set LIVEPANEL_DB_PATH to the same database used by the server.
+printf '%s' "$PASSWORD" | npm --prefix server run auth:provision -- operator1
+```
+Use a dedicated secret-handling mechanism rather than typing an actual password into shell history. The `Metrobus` username is marked as a shared account.
 
-## PR #29 – Communication Foundation
-The internal `CommandProcessor` validates an allowlist of narrowly scoped commands, records command ID/hash/result in `production_commands` within the same SQLite transaction as the state update, returns deterministic RESULTs for identical retries (including after restart) and publishes an UPDATE only once *after* commit. Changing the payload for the same ID is rejected. `SNAPSHOT` is sent after connection, with no history replay. Commands are synthetic development examples; they are not final UI API contracts.
+When `LIVEPANEL_PUBLIC_ORIGIN=https://...` is provided, the backend enables `POST /api/auth/login`, `GET /api/auth/me`, `GET /api/auth/sessions`, `POST /api/auth/logout`, `POST /api/auth/sessions/:sessionId/revoke` and `/ws/operator`. Login is username + password verified with Argon2id, and returns a random, opaque, SHA-256-digested server-side session cookie with HttpOnly, Secure, SameSite=Strict, 12-hour expiration. POST requests require an exact Origin, with a login attempt throttle. Sessions may be revoked separately. The operator WebSocket checks the session and exact Origin during handshake and before each command, and periodically invalidates revoked/expired sessions; production commands use the existing server-side processor.
 
-No unauthenticated public WebSocket is available by default. For **isolated local development only**, set `LIVEPANEL_DEV_WS=true` in the process environment, with `LIVEPANEL_HOST=127.0.0.1`. This enables:
-- `ws://127.0.0.1:3100/dev/ws/operator` – commands and operator SNAPSHOT/UPDATE.
-- `ws://127.0.0.1:3100/dev/ws/observer` – sanitized state projection, read-only.
-
-The developer gateway validates loopback peer address, localhost Host and exact local Origin, caps incoming frames at 8 KiB and rejects messages from observer clients. **Do not configure a reverse proxy for either /dev/ws path.** A proxy running on the same machine can satisfy the loopback check, so the dev gateway is not a substitute for authenticating operators. Real WSS, HttpOnly sessions, WebSocket authorization, origin policy, OBS rendering, runtime expiry scheduling, YouTube data retention and production overlays remain future PRs.
+**Not production ready:** TLS proxy configuration, internet-facing deployment, account administration UI, password-reset flow, CSRF review, comprehensive rate limiting, command authorization hardening and real frontend login integration need dedicated integration/security validation before exposure. No public overlay is implemented. Never expose /dev/ws through Nginx.

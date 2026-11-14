@@ -18,10 +18,10 @@ test('database migrations are repeatable and survive reopening', () => {
   const path = join(dir, 'database.sqlite');
   try {
     let db = openDatabase(path);
-    assert.equal((db.prepare('SELECT count(*) AS n FROM schema_migrations').get() as {n: number}).n, 3);
+    assert.equal((db.prepare('SELECT count(*) AS n FROM schema_migrations').get() as {n: number}).n, 4);
     db.close();
     db = openDatabase(path);
-    assert.equal((db.prepare('SELECT count(*) AS n FROM schema_migrations').get() as {n: number}).n, 3);
+    assert.equal((db.prepare('SELECT count(*) AS n FROM schema_migrations').get() as {n: number}).n, 4);
     db.close();
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

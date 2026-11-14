@@ -21,6 +21,27 @@ const migrations: Migration[] = [
       created_at_ms INTEGER NOT NULL CHECK (created_at_ms >= 0)
     ) STRICT;
   ` },
+  { id: '004_authentication', sql: `
+    CREATE TABLE users (
+      id INTEGER PRIMARY KEY,
+      username TEXT NOT NULL COLLATE NOCASE UNIQUE,
+      password_hash TEXT NOT NULL,
+      shared INTEGER NOT NULL DEFAULT 0 CHECK (shared IN (0,1)),
+      active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0,1)),
+      created_at_ms INTEGER NOT NULL
+    ) STRICT;
+    CREATE TABLE login_sessions (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL UNIQUE,
+      created_at_ms INTEGER NOT NULL,
+      expires_at_ms INTEGER NOT NULL,
+      revoked_at_ms INTEGER,
+      CHECK (expires_at_ms > created_at_ms)
+    ) STRICT;
+    CREATE INDEX login_sessions_user ON login_sessions(user_id);
+    CREATE INDEX login_sessions_expires ON login_sessions(expires_at_ms);
+  ` },
 ];
 
 export function migrate(db: Database.Database): void {
