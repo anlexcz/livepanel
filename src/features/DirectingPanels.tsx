@@ -32,6 +32,8 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   const [tickerInterval,setTickerInterval]=useState(5);
   const [tickerDurationCustom,setTickerDurationCustom]=useState(false);
   const [tickerIntervalCustom,setTickerIntervalCustom]=useState(false);
+  const [tickerDurationInput,setTickerDurationInput]=useState('');
+  const [tickerIntervalInput,setTickerIntervalInput]=useState('');
   const [tickerPhase,setTickerPhase]=useState<'idle'|'show'|'between'>('idle');
   const [tickerBatchStart,setTickerBatchStart]=useState<number|null>(null);
   const [tickerPauseTime,setTickerPauseTime]=useState<number|null>(null);
@@ -39,12 +41,22 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   const [tickerEffectiveDuration,setTickerEffectiveDuration]=useState(20);
   const [tickerEffectiveInterval,setTickerEffectiveInterval]=useState(300);
   const [tickerCountdown,setTickerCountdown]=useState(20);
+  function updateCustomTime(value:string,kind:'duration'|'interval'){
+    if(!/^\d*$/.test(value))return;
+    const number=Number(value),max=kind==='duration'?3600:1440;
+    if(kind==='duration')setTickerDurationInput(value);else setTickerIntervalInput(value);
+    if(value.trim()!=='' && Number.isInteger(number) && number>=1 && number<=max){
+      if(kind==='duration'){setTickerDuration(number);setTickerDurationCustom(true);}
+      else{setTickerInterval(number);setTickerIntervalCustom(true);}
+    }
+  }
   const [editorial,setEditorial]=useState<EditorialItem[]>(initialEditorial);
   const [editorialCurrent,setEditorialCurrent]=useState<EditorialItem|null>(null);
   const [editorialEdit,setEditorialEdit]=useState<string|null>(null);
   const [editorialDraft,setEditorialDraft]=useState({heading:'',subheading:''});
   const [showEditorialLibrary,setShowEditorialLibrary]=useState(false);
   const featured=messages.find(m=>m.id===featuredId);
+  const activeTickerItem=tickerItems.find(item=>item.id===tickerCurrent);
   function nextEvent(){
     if(eventPaused)return;
     setEvents(previous=>previous.slice(1));
@@ -105,6 +117,13 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     setTickerEdit(item?.id||'new');
     setTickerDraft(item?.text||'');
   }
+  function deleteTicker(id:string){
+    const item=tickerItems.find(entry=>entry.id===id);
+    if(!item || !window.confirm('Smazat zprávu z knihovny? Aktuálně vysílaná zpráva zůstane do konce svého zobrazení.'))return;
+    // Keep the on-screen snapshot separate from library contents.
+    setTickerItems(items=>items.filter(entry=>entry.id!==id));
+    if(tickerEdit===id)setTickerEdit(null);
+  }
   function saveTicker(){
     const txt=tickerDraft.trim();if(!txt)return;
     setTickerItems(items=>tickerEdit==='new'?[...items,{id:'tick-'+Date.now(),text:txt,enabled:true}]:items.map(item=>item.id===tickerEdit?{...item,text:txt}:item));
@@ -115,6 +134,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     setEditorialEdit(item?.id||'new');
     setEditorialDraft({heading:item?.heading||'',subheading:item?.subheading||''});
   }
+  function hideEditorial(){setEditorialCurrent(null);}
   function saveEditorial(){
     if(!editorialDraft.heading.trim())return;
     const item={id:editorialEdit==='new'?'edit-'+Date.now():editorialEdit||'edit',heading:editorialDraft.heading.trim(),subheading:editorialDraft.subheading.trim()};
@@ -124,7 +144,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   return <>
     <div className="directing-live-column">
     <Module name="FEATURED" status={featured?'Zvýrazněn komentář':'Žádný aktivní komentář'} collapsed={collapsed.FEATURED} onToggle={()=>toggle('FEATURED')}>
-      <div className="panel-state">{featured?<><Status type="good">Zvýraznění (demo)</Status><p><strong>{featured.author}</strong> · {featured.text}</p></>:<span>Žádný zvýrazněný komentář.</span>}</div>
+      <div className="panel-state">{featured?<><Status type="good">Zvýrazněno</Status><p><strong>{featured.author}</strong> · {featured.text}</p></>:<span>Žádný zvýrazněný komentář.</span>}</div>
       <div className="featured-tabs" role="tablist" aria-label="Zásobník FEATURED">
         <button role="tab" aria-selected={featuredTab==='favorites'} className={featuredTab==='favorites'?'selected':''} onClick={()=>setFeaturedTab('favorites')}>Oblíbené ({favorites.length})</button>
         <button role="tab" aria-selected={featuredTab==='shown'} className={featuredTab==='shown'?'selected':''} onClick={()=>setFeaturedTab('shown')}>Zobrazeno ({shownMessages.length})</button>
@@ -136,10 +156,10 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
         </div>)}
         {(featuredTab==='favorites'?favorites:shownMessages).length===0&&<Empty>{featuredTab==='favorites'?'Žádné oblíbené komentáře čekající na zobrazení.':'Zatím nebyl zobrazen žádný komentář.'}</Empty>}
       </div>
-      {featured&&<Buttons><PanelButton danger onClick={()=>onFeature(null)}><EyeOff size={15}/> Skrýt</PanelButton><PanelButton onClick={()=>onFeature(featured.id)}><RotateCcw size={15}/> Prodloužit (demo)</PanelButton></Buttons>}
+      {featured&&<Buttons><PanelButton danger onClick={()=>onFeature(null)}><EyeOff size={15}/> Skrýt</PanelButton><PanelButton onClick={()=>onFeature(featured.id)}><RotateCcw size={15}/> Prodloužit</PanelButton></Buttons>}
     </Module>
     <Module name="EVENT" status={(eventPaused?'Pozastaveno · ':'')+'Fronta: '+events.length} collapsed={collapsed.EVENT} onToggle={()=>toggle('EVENT')}>
-      <div className="panel-state"><Status type={eventPaused?'warn':activeEvent?'good':'neutral'}>{eventPaused?'Čeká – pozastaveno':activeEvent?'Aktuální událost (demo)':'Čeká na událost'}</Status>{activeEvent&&<p><strong>{activeEvent.type} · {activeEvent.author}</strong><br/>{activeEvent.detail}</p>}</div>
+      <div className="panel-state"><Status type={eventPaused?'warn':activeEvent?'good':'neutral'}>{eventPaused?'Čeká – pozastaveno':activeEvent?'Aktuální událost':'Čeká na událost'}</Status>{activeEvent&&<p><strong>{activeEvent.type} · {activeEvent.author}</strong><br/>{activeEvent.detail}</p>}</div>
       <Buttons><PanelButton onClick={()=>setEventPaused(x=>!x)}>{eventPaused?<Play size={15}/>:<Pause size={15}/>} {eventPaused?'Pokračovat':'Pozastavit'}</PanelButton><PanelButton primary onClick={nextEvent} disabled={eventPaused||!events.length}><Play size={15}/> Odbavit další</PanelButton>{activeEvent&&<PanelButton onClick={()=>setActiveEvent(null)}><SkipForward size={15}/> Ukončit</PanelButton>}</Buttons>
       <div className="lp-subsection">
         <button className="lp-inline-disclosure" onClick={()=>setEventExpanded(v=>!v)} aria-expanded={eventExpanded}>Čekající události ({events.length}) {eventExpanded?<ChevronUp size={16}/>:<ChevronDown size={16}/>}</button>
@@ -149,14 +169,14 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     </Module>
     </div>
     <div className="directing-content-column">
-    <Module name="TICKER" status={tickerPhase==='idle'?'Automatika zastavena':tickerRunning?'Testovací dávka běží':'Pozastaveno'} collapsed={collapsed.TICKER} onToggle={()=>toggle('TICKER')}>
-      <div className="panel-state"><Status type={tickerRunning?'good':tickerPhase==='idle'?'neutral':'warn'}>{tickerPhase==='idle'?'Automatika neběží':tickerRunning?'Dávka běží (demo)':'Pozastaveno (demo)'}</Status><p>{tickerCurrent?tickerItems.find(t=>t.id===tickerCurrent)?.text:'Žádná aktuálně vysílaná zpráva.'}</p></div>
+    <Module name="TICKER" status={tickerPhase==='idle'?'Automatika zastavena':tickerRunning?'Dávka běží':'Pozastaveno'} collapsed={collapsed.TICKER} onToggle={()=>toggle('TICKER')}>
+      <div className="panel-state"><Status type={tickerRunning?'good':tickerPhase==='idle'?'neutral':'warn'}>{tickerPhase==='idle'?'Automatika neběží':tickerRunning?'Dávka běží':'Pozastaveno'}</Status><p>{tickerCurrent?tickerItems.find(t=>t.id===tickerCurrent)?.text:'Žádná aktuálně vysílaná zpráva.'}</p></div>
       <Buttons>
         <PanelButton primary onClick={sendTicker} disabled={!tickerItems.some(t=>t.enabled)}><Play size={15}/> {tickerPhase==='idle'?'Spustit dávku':tickerPhase==='between'?'Spustit nyní':'Další zpráva'}</PanelButton>
         <PanelButton onClick={pauseTicker} disabled={tickerPhase==='idle'}>{tickerRunning?<Pause size={15}/>:<Play size={15}/>} {tickerRunning?'Pozastavit':'Pokračovat'}</PanelButton>
         <PanelButton onClick={stopTicker}>Zastavit</PanelButton>
       </Buttons>
-      {tickerPhase!=='idle'&&<p className="lp-muted">Demo: {tickerPhase==='show'?'Aktuální zpráva':'Do další dávky'} · {tickerCountdown} s {tickerRunning?'':'(pozastaveno)'}</p>}
+      {tickerPhase!=='idle'&&<p className="lp-muted">{tickerPhase==='show'?'Aktuální zpráva':'Do další dávky'} · {tickerCountdown} s {tickerRunning?'':'(pozastaveno)'}</p>}
       <div className="lp-disclosure-block">
         <button type="button" className="lp-inline-disclosure" aria-expanded={tickerTimingOpen} onClick={()=>setTickerTimingOpen(v=>!v)}>
           <span><Clock3 size={15}/> Zpráva {tickerDuration} s · Dávka každých {tickerInterval} min</span>
@@ -168,16 +188,18 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
               <label>Délka jedné zprávy</label>
               <div className="lp-timing-choices">
                 {[10,20,30].map(value=><button key={value} type="button" className={!tickerDurationCustom&&tickerDuration===value?'selected':''} onClick={()=>{setTickerDuration(value);setTickerDurationCustom(false)}}>{value} s</button>)}
-                <button type="button" className={tickerDurationCustom?'selected':''} onClick={()=>setTickerDurationCustom(true)}>Vlastní</button>
+                <label className={'lp-timing-inline-custom '+(tickerDurationCustom?'selected':'')}>
+                  <input type="number" min="1" max="3600" aria-label="Vlastní délka zprávy v sekundách" placeholder="Vlastní" value={tickerDurationInput} onChange={e=>updateCustomTime(e.target.value,'duration')}/><span>s</span>
+                </label>
               </div>
-              {tickerDurationCustom&&<label className="lp-timing-custom">Sekund <input aria-label="Vlastní délka zprávy v sekundách" type="number" min="1" max="3600" value={tickerDuration} onChange={e=>setTickerDuration(Math.min(3600,Math.max(1,Number(e.target.value)||1)))}/></label>}
-              <label>Interval mezi začátky dávek</label>
+              <label>Interval mezi dávkami</label>
               <div className="lp-timing-choices">
                 {[2,5,10].map(value=><button key={value} type="button" className={!tickerIntervalCustom&&tickerInterval===value?'selected':''} onClick={()=>{setTickerInterval(value);setTickerIntervalCustom(false)}}>{value} min</button>)}
-                <button type="button" className={tickerIntervalCustom?'selected':''} onClick={()=>setTickerIntervalCustom(true)}>Vlastní</button>
+                <label className={'lp-timing-inline-custom '+(tickerIntervalCustom?'selected':'')}>
+                  <input type="number" min="1" max="1440" aria-label="Vlastní interval mezi dávkami v minutách" placeholder="Vlastní" value={tickerIntervalInput} onChange={e=>updateCustomTime(e.target.value,'interval')}/><span>min</span>
+                </label>
               </div>
-              {tickerIntervalCustom&&<label className="lp-timing-custom">Minut <input aria-label="Vlastní interval dávek v minutách" type="number" min="1" max="1440" value={tickerInterval} onChange={e=>setTickerInterval(Math.min(1440,Math.max(1,Number(e.target.value)||1)))}/></label>}
-              <p className="lp-muted">Změny časování platí od další dávky. Interval se počítá od začátku předchozí dávky, dávky se nikdy nepřekrývají.</p>
+
             </div>
           </div>
         </div>
@@ -189,8 +211,8 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
         </button>
         <div className={'lp-animated-disclosure '+(tickerLibraryOpen?'is-open':'')} inert={!tickerLibraryOpen}>
           <div className="lp-animated-disclosure-inner">
-            {tickerItems.map(item=><div className="lp-library-row" key={item.id}>
-              <label className="lp-checkbox-line"><input type="checkbox" checked={item.enabled} onChange={e=>setTickerItems(rows=>rows.map(row=>row.id===item.id?{...row,enabled:e.target.checked}:row))} aria-label={'Zahrnout zprávu: '+item.text}/></label>
+            {tickerItems.map(item=><div className={'lp-library-row lp-ticker-row '+(tickerCurrent===item.id?'lp-row-active':'')} key={item.id}>
+              <label className="lp-checkbox-line lp-ticker-checkbox"><input type="checkbox" checked={item.enabled} onChange={e=>setTickerItems(rows=>rows.map(row=>row.id===item.id?{...row,enabled:e.target.checked}:row))} aria-label={'Zahrnout zprávu: '+item.text}/></label>
               {tickerEdit===item.id?
                 <input className="lp-inline-text" autoFocus aria-label="Upravit text zprávy" value={tickerDraft}
                   onChange={e=>setTickerDraft(e.target.value)}
@@ -198,7 +220,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
                 <span className="lp-inline-content">{item.text}</span>}
               <div className="lp-row-actions">
                 {tickerEdit===item.id?<><button className="lp-icon-action" title="Uložit (Enter)" aria-label="Uložit úpravu" disabled={!tickerDraft.trim()} onClick={saveTicker}><Check size={17}/></button><button className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit úpravu" onClick={()=>setTickerEdit(null)}><X size={17}/></button></>:
-                <button className="lp-icon-action" title="Upravit zprávu" aria-label="Upravit zprávu" onClick={()=>startTickerEdit(item)}><Pencil size={17}/></button>}
+                <><button className="lp-icon-action" title="Upravit zprávu" aria-label="Upravit zprávu" onClick={()=>startTickerEdit(item)}><Pencil size={17}/></button><button className="lp-icon-action lp-delete" title="Smazat zprávu" aria-label="Smazat zprávu" onClick={()=>deleteTicker(item.id)}><Trash2 size={17}/></button></>}
               </div>
             </div>)}
             {tickerEdit==='new'&&<div className="lp-library-row lp-new-row">
@@ -210,11 +232,15 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
           </div>
         </div>
       </div>
-      <p className="lp-muted">Automatické dávkování je zde pouze lokální simulace; serverové časování a OBS zatím nejsou připojené.</p>
+      
     </Module>
     <Module name="EDITORIAL" status={editorialCurrent?'Aktivní titulek':'Žádný aktivní titulek'} collapsed={collapsed.EDITORIAL} onToggle={()=>toggle('EDITORIAL')}>
-      <div className="panel-state">{editorialCurrent?<><Status type="good">Titulek aktivní (demo)</Status><p><strong>{editorialCurrent.heading}</strong><br/>{editorialCurrent.subheading}</p></>:'Momentálně není zobrazen žádný titulek.'}</div>
-      {editorialCurrent&&<Buttons><PanelButton danger onClick={()=>setEditorialCurrent(null)}><EyeOff size={15}/> Skrýt titulek</PanelButton></Buttons>}
+      <div className="panel-state lp-editorial-status">
+        <div className="lp-editorial-status-copy">
+          {editorialCurrent?<><strong>{editorialCurrent.heading}</strong><span>{editorialCurrent.subheading}</span></>:<span className="lp-editorial-empty">Momentálně není zobrazen žádný titulek.</span>}
+        </div>
+        <button type="button" className="lp-icon-action lp-editorial-quick-hide" title="Skrýt aktivní titulek" aria-label="Skrýt aktivní titulek" disabled={!editorialCurrent} onClick={hideEditorial}><EyeOff size={18}/></button>
+      </div>
       <div className="lp-disclosure-block">
         <button type="button" className="lp-inline-disclosure" aria-expanded={showEditorialLibrary} onClick={()=>setShowEditorialLibrary(v=>!v)}>
           <span>Knihovna titulků ({editorial.length})</span>
@@ -222,7 +248,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
         </button>
         <div className={'lp-animated-disclosure '+(showEditorialLibrary?'is-open':'')} inert={!showEditorialLibrary}>
           <div className="lp-animated-disclosure-inner">
-            {editorial.map(item=><div className="lp-library-row" key={item.id}>
+            {editorial.map(item=><div className={'lp-library-row lp-editorial-row '+(editorialCurrent?.id===item.id?'lp-row-active':'')} key={item.id}>
               {editorialEdit===item.id?
                 <div className="lp-inline-editorial-fields">
                   <input autoFocus aria-label="Nadpis titulku" value={editorialDraft.heading}
@@ -235,7 +261,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
                 <div className="lp-library-text"><strong>{item.heading}</strong><small>{item.subheading}</small></div>}
               <div className="lp-row-actions">
                 {editorialEdit===item.id?<><button className="lp-icon-action" title="Uložit (Enter)" aria-label="Uložit titulek" disabled={!editorialDraft.heading.trim()} onClick={saveEditorial}><Check size={17}/></button><button className="lp-icon-action" title="Zrušit (Esc)" aria-label="Zrušit úpravu titulku" onClick={()=>setEditorialEdit(null)}><X size={17}/></button></>:
-                <><PanelButton primary onClick={()=>setEditorialCurrent({...item})}>Zobrazit</PanelButton><button className="lp-icon-action" title="Upravit titulek" aria-label="Upravit titulek" onClick={()=>startEditorialEdit(item)}><Pencil size={17}/></button><button className="lp-icon-action lp-delete" title="Smazat titulek" aria-label="Smazat titulek" onClick={()=>{if(window.confirm('Odstranit položku z ukázkové knihovny? Aktivní titulek zůstane zobrazen.'))setEditorial(rows=>rows.filter(x=>x.id!==item.id))}}><Trash2 size={17}/></button></>}
+                <><PanelButton primary={editorialCurrent?.id!==item.id} onClick={()=>editorialCurrent?.id===item.id?hideEditorial():setEditorialCurrent({...item})}>{editorialCurrent?.id===item.id?'Skrýt':'Zobrazit'}</PanelButton><button className="lp-icon-action" title="Upravit titulek" aria-label="Upravit titulek" onClick={()=>startEditorialEdit(item)}><Pencil size={17}/></button><button className="lp-icon-action lp-delete" title="Smazat titulek" aria-label="Smazat titulek" onClick={()=>{if(window.confirm('Odstranit položku z ukázkové knihovny? Aktivní titulek zůstane zobrazen.'))setEditorial(rows=>rows.filter(x=>x.id!==item.id))}}><Trash2 size={17}/></button></>}
               </div>
             </div>)}
             {editorialEdit==='new'&&<div className="lp-library-row lp-new-row">
