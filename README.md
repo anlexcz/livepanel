@@ -7,7 +7,7 @@ Vývojový prototyp administrace pro živou režii Metrobusu. **Momentálně pou
 Požadavky: Node.js 20.19+ nebo novější kompatibilní s Vite 6, npm.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
