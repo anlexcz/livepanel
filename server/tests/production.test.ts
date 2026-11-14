@@ -49,11 +49,12 @@ test('conflict prevents stale writes and invalid state rolls back without revisi
   const db = openDatabase(path);
   try {
     const store = new ProductionStore(db, () => 2000);
-    store.update(c => ({state: {...c.state, chat: { mode: 'enabled' }}}), 0);
+    store.update(c => ({streamId:'synthetic', state: {...c.state, chat: { mode: 'enabled' }}}), 0);
     assert.throws(() => store.update(c => ({state: {...c.state, chat: { mode: 'paused' }}}), 0), RevisionConflictError);
     assert.throws(() => store.update(() => ({state: {invalid: true} as never})), /Production State/);
     assert.equal(store.read().revision, 1);
     assert.equal(store.read().state.chat.mode, 'enabled');
+    assert.throws(() => store.update(c => ({streamId:null, state:c.state})), /Inactive stream/);
   } finally { db.close(); }
 }));
 
@@ -92,6 +93,7 @@ test('a read snapshot cannot mutate persisted data; clearSession is explicit and
     assert.equal(cleared.streamId, null);
     assert.deepEqual(cleared.state, initialProductionState());
     assert.equal(cleared.revision, 2);
+    assert.throws(() => store.update(c => ({state: {...c.state, chat: { mode: 'paused' }}})), /Inactive stream/);
   } finally { db.close(); }
 }));
 
