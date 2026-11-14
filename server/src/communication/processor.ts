@@ -113,6 +113,8 @@ export class CommandProcessor {
               return {state:{...state,editorial:{itemId:p.itemId as string}}};
             case 'editorial.hide':
               return {state:{...state,editorial:{itemId:null}}};
+            default:
+              throw new Error('INVALID_STATE unsupported action');
           }
         },expected);
     }
