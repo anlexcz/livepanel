@@ -13,7 +13,7 @@ export default function SettingsPage(){
     <DemoNotice>Účty a nastavení propojení jsou pouze návrhem UI. Neukládají se hesla ani OAuth tokeny a nepřipojuje se YouTube.</DemoNotice>
     <div className="lp-settings-layout">
       <nav className="lp-settings-menu" aria-label="Kategorie nastavení">
-        {[['general','Obecné'],['operators','Operátoři'],['youtube','YouTube a relace'],['appearance','Rozhraní']].map(([key,name])=><button className={section===key?'is-selected':''} key={key} onClick={()=>{setSection(key);setConfirmation('');}}>{name}</button>)}
+        {[['general','Obecné'],['operators','Operátoři'],['youtube','YouTube a relace'],['appearance','Rozhraní']].map(([key,name])=><button type="button" className={section===key?'is-selected':''} key={key} onClick={()=>{setSection(key);setConfirmation('');}}>{name}</button>)}
       </nav>
       <div className="lp-settings-main">
         {section==='general'&&<Surface title="Základní údaje" subtitle="Konfigurace projektu">
