@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, Link2, LockKeyhole, Monitor, ShieldCheck, UserRound } from 'lucide-react';
-import { DemoNotice, Field, PageHeading, PanelButton, Surface, Status } from '../components/Ui';
+import { DemoNotice, Field, InfoRow, PageHeading, PanelButton, Surface, Status } from '../components/Ui';
 
 export default function SettingsPage(){
   const [section,setSection]=useState('general');
@@ -24,12 +24,12 @@ export default function SettingsPage(){
           <p className="lp-muted">Žádné automatické aktualizace ani zálohování nejsou součástí plánované administrace.</p>
         </Surface>}
         {section==='operators'&&<><Surface title="Operátorské účty" subtitle="Osobní účty se stejnými režijními právy">
-          <div className="lp-list-row"><UserRound size={19}/><div><strong>Testovací operátor</strong><small>Aktuální prohlížeč · simulace</small></div><Status type="neutral">DEMO</Status></div>
-          <div className="lp-list-row"><ShieldCheck size={19}/><div><strong>Metrobus</strong><small>Budoucí společný účet</small></div><Status type="neutral">Nenastaveno</Status></div>
+          <InfoRow icon={UserRound} title="Testovací operátor" detail="Aktuální prohlížeč · simulace" trailing={<Status type="neutral">DEMO</Status>}/>
+          <InfoRow icon={ShieldCheck} title="Metrobus" detail="Budoucí společný účet" trailing={<Status type="neutral">Nenastaveno</Status>}/>
           <PanelButton disabled>Přidat účet</PanelButton>
         </Surface><Surface title="Osobní profil"><Field label="Zobrazované jméno"><input value={displayName} onChange={e=>setDisplayName(e.target.value)} /></Field><PanelButton onClick={()=>setConfirmation('Jméno bylo změněno pouze v náhledu, bez serverového ukládání.')}>Použít v demo UI</PanelButton>{confirmation&&<p className="lp-local-confirm"><Check size={15}/>{confirmation}</p>}</Surface></>}
         {section==='youtube'&&<><Surface title="Připojení YouTube" subtitle="Budoucí propojení jednoho kanálu">
-          <div className="lp-list-row"><Link2 size={19}/><div><strong>YouTube kanál Metrobus</strong><small>OAuth není implementován</small></div><Status type="neutral">Nepřipojeno</Status></div>
+          <InfoRow icon={Link2} title="YouTube kanál Metrobus" detail="OAuth není implementován" trailing={<Status type="neutral">Nepřipojeno</Status>}/>
           <PanelButton disabled>Propojit kanál</PanelButton>
         </Surface><Surface title="Ukázkový vstup vysílání">
           <Field label="Adresa vysílání"><input value={source} onChange={e=>setSource(e.target.value)} /></Field>
@@ -42,8 +42,8 @@ export default function SettingsPage(){
           <Field label="Kompaktní zobrazení"><span className="lp-checkbox-line"><input type="checkbox" checked={compact} onChange={e=>setCompact(e.target.checked)}/> Zapnout kompaktní rozestupy (náhled preference)</span></Field>
           <p className="lp-muted">Skutečné osobní preference budou později automaticky synchronizovány přes uživatelský účet. V tomto prototypu se nastavení neopírá o server.</p>
         </Surface><Surface title="Rozlišení a přístupnost">
-          <div className="lp-list-row"><Monitor size={19}/><div><strong>Responzivní režie</strong><small>Na mobilu přepínání CHAT / REŽIE</small></div></div>
-          <div className="lp-list-row"><LockKeyhole size={19}/><div><strong>Bezpečné ovládání</strong><small>Serverové potvrzení produkčních akcí dosud neexistuje</small></div></div>
+          <InfoRow icon={Monitor} title="Responzivní režie" detail="Na mobilu přepínání CHAT / REŽIE"/>
+          <InfoRow icon={LockKeyhole} title="Bezpečné ovládání" detail="Serverové potvrzení produkčních akcí dosud neexistuje"/>
         </Surface></>}
       </div>
     </div>

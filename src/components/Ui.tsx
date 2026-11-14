@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle, Check, ChevronDown, Download, Info } from 'lucide-react';
 
 export function PageHeading({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
@@ -18,6 +19,21 @@ export function DemoNotice({ children }: { children?: ReactNode }) {
 }
 export function Status({ type, children }: { type: 'good' | 'warn' | 'error' | 'neutral'; children: ReactNode }) {
   return <span className={'lp-status lp-status-' + type}><span className="lp-status-dot"/>{children}</span>;
+}
+/** Read-only labelled setting or connection item, shared between admin sections. */
+export function InfoRow({ icon: Icon, title, detail, trailing }: { icon: LucideIcon; title: string; detail: string; trailing?: ReactNode }) {
+  return <div className="lp-list-row">
+    <Icon size={19} aria-hidden="true"/>
+    <div><strong>{title}</strong><small>{detail}</small></div>
+    {trailing}
+  </div>;
+}
+/** Uniform diagnostic metric: title, value/status and explanatory note. */
+export function MetricCard({ icon: Icon, name, value, note, status }: { icon: LucideIcon; name: string; value: string; note: string; status: 'good'|'warn'|'error'|'neutral' }) {
+  return <div className="lp-metric">
+    <div className="lp-metric-top"><Icon size={19} aria-hidden="true"/><span>{name}</span></div>
+    <Status type={status}>{value}</Status><small>{note}</small>
+  </div>;
 }
 export function Empty({ children }: { children: ReactNode }) {
   return <p className="lp-empty">{children}</p>;
