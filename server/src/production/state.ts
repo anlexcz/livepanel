@@ -33,7 +33,7 @@ export function validateProductionState(value: unknown): asserts value is Produc
   keys(state, ['chat','featured','event','ticker','editorial']);
   const chat = record(state.chat);
   keys(chat, ['mode']);
-  if (!['enabled','paused','disabled'].includes(String(chat.mode))) throw new Error('Invalid chat mode');
+  if (typeof chat.mode !== 'string' || !['enabled','paused','disabled'].includes(chat.mode)) throw new Error('Invalid chat mode');
   const featured = record(state.featured);
   keys(featured, ['messageId','expiresAtMs']);
   if (featured.messageId !== null && (typeof featured.messageId !== 'string' || !featured.messageId.trim())) throw new Error('Invalid featured message ID');
@@ -44,7 +44,7 @@ export function validateProductionState(value: unknown): asserts value is Produc
   if (!Array.isArray(event.queue) || event.queue.some((item: unknown) => typeof item !== 'string' || !item.trim()) || typeof event.paused !== 'boolean') throw new Error('Invalid event queue');
   const ticker = record(state.ticker);
   keys(ticker, ['status','position']);
-  if (!['stopped','running','paused'].includes(String(ticker.status)) || typeof ticker.position !== 'number' || !Number.isSafeInteger(ticker.position) || ticker.position < 0) throw new Error('Invalid ticker');
+  if (typeof ticker.status !== 'string' || !['stopped','running','paused'].includes(ticker.status)) || typeof ticker.position !== 'number' || !Number.isSafeInteger(ticker.position) || ticker.position < 0) throw new Error('Invalid ticker');
   const editorial = record(state.editorial);
   keys(editorial, ['itemId']);
   if (editorial.itemId !== null && (typeof editorial.itemId !== 'string' || !editorial.itemId.trim())) throw new Error('Invalid editorial reference');
