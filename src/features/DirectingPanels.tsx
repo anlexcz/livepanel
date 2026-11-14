@@ -24,6 +24,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   const [tickerItems,setTickerItems]=useState<TickerItem[]>(initialTicker);
   const [tickerRunning,setTickerRunning]=useState(false);
   const [tickerCurrent,setTickerCurrent]=useState<string|null>(null);
+  const [tickerCurrentText,setTickerCurrentText]=useState('');
   const [tickerEdit,setTickerEdit]=useState<string|null>(null);
   const [tickerDraft,setTickerDraft]=useState('');
   const [tickerLibraryOpen,setTickerLibraryOpen]=useState(false);
@@ -56,7 +57,6 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   const [editorialDraft,setEditorialDraft]=useState({heading:'',subheading:''});
   const [showEditorialLibrary,setShowEditorialLibrary]=useState(false);
   const featured=messages.find(m=>m.id===featuredId);
-  const activeTickerItem=tickerItems.find(item=>item.id===tickerCurrent);
   function nextEvent(){
     if(eventPaused)return;
     setEvents(previous=>previous.slice(1));
@@ -64,7 +64,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   }
   // Local demo only. Each interval is measured between starts of batches.
   function stopTicker(){
-    setTickerRunning(false);setTickerCurrent(null);setTickerPhase('idle');
+    setTickerRunning(false);setTickerCurrent(null);setTickerCurrentText('');setTickerPhase('idle');
     setTickerBatchStart(null);setTickerNextAt(null);setTickerPauseTime(null);
   }
   function beginTickerBatch(){
@@ -73,7 +73,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     const now=Date.now(),duration=Math.max(1,Math.round(tickerDuration));
     const interval=Math.max(10,Math.round(tickerInterval*60));
     setTickerEffectiveDuration(duration);setTickerEffectiveInterval(interval);
-    setTickerBatchStart(now);setTickerPhase('show');setTickerCurrent(enabled[0].id);
+    setTickerBatchStart(now);setTickerPhase('show');setTickerCurrent(enabled[0].id);setTickerCurrentText(enabled[0].text);
     setTickerNextAt(now+duration*1000);setTickerCountdown(duration);
     setTickerRunning(true);setTickerPauseTime(null);
   }
@@ -90,10 +90,10 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     const enabled=tickerItems.filter(t=>t.enabled);
     const index=enabled.findIndex(t=>t.id===tickerCurrent),now=Date.now();
     if(index>=0&&index+1<enabled.length){
-      setTickerCurrent(enabled[index+1].id);setTickerNextAt(now+tickerEffectiveDuration*1000);
+      setTickerCurrent(enabled[index+1].id);setTickerCurrentText(enabled[index+1].text);setTickerNextAt(now+tickerEffectiveDuration*1000);
       setTickerCountdown(tickerEffectiveDuration);return;
     }
-    setTickerCurrent(null);setTickerPhase('between');
+    setTickerCurrent(null);setTickerCurrentText('');setTickerPhase('between');
     const wait=Math.max(now,(tickerBatchStart||now)+tickerEffectiveInterval*1000);
     setTickerNextAt(wait);setTickerCountdown(Math.ceil((wait-now)/1000));
   }
@@ -170,7 +170,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     </div>
     <div className="directing-content-column">
     <Module name="TICKER" status={tickerPhase==='idle'?'Automatika zastavena':tickerRunning?'Dávka běží':'Pozastaveno'} collapsed={collapsed.TICKER} onToggle={()=>toggle('TICKER')}>
-      <div className="panel-state"><Status type={tickerRunning?'good':tickerPhase==='idle'?'neutral':'warn'}>{tickerPhase==='idle'?'Automatika neběží':tickerRunning?'Dávka běží':'Pozastaveno'}</Status><p>{tickerCurrent?tickerItems.find(t=>t.id===tickerCurrent)?.text:'Žádná aktuálně vysílaná zpráva.'}</p></div>
+      <div className="panel-state"><Status type={tickerRunning?'good':tickerPhase==='idle'?'neutral':'warn'}>{tickerPhase==='idle'?'Automatika neběží':tickerRunning?'Dávka běží':'Pozastaveno'}</Status><p>{tickerCurrent?tickerCurrentText:'Žádná aktuálně vysílaná zpráva.'}</p></div>
       <Buttons>
         <PanelButton primary onClick={sendTicker} disabled={!tickerItems.some(t=>t.enabled)}><Play size={15}/> {tickerPhase==='idle'?'Spustit dávku':tickerPhase==='between'?'Spustit nyní':'Další zpráva'}</PanelButton>
         <PanelButton onClick={pauseTicker} disabled={tickerPhase==='idle'}>{tickerRunning?<Pause size={15}/>:<Play size={15}/>} {tickerRunning?'Pozastavit':'Pokračovat'}</PanelButton>
