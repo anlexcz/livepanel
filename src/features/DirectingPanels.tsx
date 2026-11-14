@@ -11,8 +11,10 @@ type Props={
 function Module({name,status,collapsed,onToggle,children}:{name:Category;status:string;collapsed:boolean;onToggle:()=>void;children:React.ReactNode}){
   const Icon={FEATURED:Star,EVENT:Zap,TICKER:List,EDITORIAL:Type}[name];
   return <section className="panel director-panel">
-    <button className="panel-toggle" aria-expanded={!collapsed} onClick={onToggle}><span className="panel-heading"><Icon size={18}/>{name}</span><span className="panel-summary">{status}</span>{collapsed?<ChevronDown size={18}/>:<ChevronUp size={18}/>}</button>
-    {!collapsed&&<div className="panel-body">{children}</div>}
+    <button className="panel-toggle" aria-expanded={!collapsed} onClick={onToggle}><span className="panel-heading"><Icon size={18}/>{name}</span><span className="panel-summary">{status}</span><ChevronDown size={18} className={'lp-collapse-chevron '+(collapsed?'':'is-open')}/></button>
+    <div className={'lp-module-disclosure '+(collapsed?'':'is-open')} inert={collapsed} aria-hidden={collapsed}>
+      <div className="lp-module-disclosure-inner"><div className="panel-body">{children}</div></div>
+    </div>
   </section>;
 }
 export default function DirectingPanels({messages,favorites,shownMessages,featuredId,onFeature,collapsed,toggle}:Props){
@@ -22,6 +24,13 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   const [eventPaused,setEventPaused]=useState(false);
   const [eventTab,setEventTab]=useState<'waiting'|'history'>('waiting');
   const [eventHistory,setEventHistory]=useState<EventItem[]>([]);
+  const [recentSave,setRecentSave]=useState<{kind:'ticker'|'editorial';id:string}|null>(null);
+  useEffect(()=>{
+    if(!recentSave)return;
+    const timer=window.setTimeout(()=>setRecentSave(null),450);
+    return ()=>window.clearTimeout(timer);
+  },[recentSave]);
+
   const [featuredDeadline,setFeaturedDeadline]=useState<number|null>(null);
   const [featuredRemaining,setFeaturedRemaining]=useState(0);
   // The browser timer is for this demo only; the server will own production expiry.
@@ -157,7 +166,9 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   }
   function saveTicker(){
     const txt=tickerDraft.trim();if(!txt)return;
-    setTickerItems(items=>tickerEdit==='new'?[...items,{id:'tick-'+Date.now(),text:txt,enabled:true}]:items.map(item=>item.id===tickerEdit?{...item,text:txt}:item));
+    const savedId=tickerEdit==='new'?'tick-'+Date.now():tickerEdit;
+    setTickerItems(items=>tickerEdit==='new'?[...items,{id:savedId||'tick-new',text:txt,enabled:true}]:items.map(item=>item.id===tickerEdit?{...item,text:txt}:item));
+    if(savedId)setRecentSave({kind:'ticker',id:savedId});
     setTickerEdit(null);
   }
   function startEditorialEdit(item?:EditorialItem){
@@ -170,6 +181,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     if(!editorialDraft.heading.trim())return;
     const item={id:editorialEdit==='new'?'edit-'+Date.now():editorialEdit||'edit',heading:editorialDraft.heading.trim(),subheading:editorialDraft.subheading.trim()};
     setEditorial(items=>editorialEdit==='new'?[...items,item]:items.map(x=>x.id===editorialEdit?item:x));
+    setRecentSave({kind:'editorial',id:item.id});
     setEditorialEdit(null);
   }
   return <>
@@ -180,7 +192,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
           <Status type={featured?'good':'neutral'}>{featured?'Zvýrazněno':'Bez zvýraznění'}</Status>
           {featured&&<span className="lp-live-countdown" title="Zbývající čas lokálního náhledu"><Clock3 size={13}/>{featuredRemaining} s</span>}
         </div>
-        {featured?<p><strong>{featured.author}</strong> · {featured.text}</p>:<p>Žádný zvýrazněný komentář.</p>}
+        <p key={featured?.id||'featured-empty'} className="lp-content-change">{featured?<><strong>{featured.author}</strong> · {featured.text}</>:'Žádný zvýrazněný komentář.'}</p>
       </div>
       <div className="lp-live-controls">
         <Buttons>
@@ -188,22 +200,22 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
           <PanelButton danger onClick={()=>onFeature(null)} disabled={!featured}><EyeOff size={15}/> Skrýt</PanelButton>
         </Buttons>
       </div>
-      <div className="featured-tabs" role="tablist" aria-label="Zásobník FEATURED">
+      <div className="featured-tabs lp-motion-tabs" data-tab={featuredTab} role="tablist" aria-label="Zásobník FEATURED">
         <button role="tab" aria-selected={featuredTab==='favorites'} className={featuredTab==='favorites'?'selected':''} onClick={()=>setFeaturedTab('favorites')}>Oblíbené ({favorites.length})</button>
         <button role="tab" aria-selected={featuredTab==='shown'} className={featuredTab==='shown'?'selected':''} onClick={()=>setFeaturedTab('shown')}>Zobrazeno ({shownMessages.length})</button>
       </div>
       <div className="featured-list" role="tabpanel" aria-label={featuredTab==='favorites'?'Dosud nezobrazené oblíbené':'Zobrazené komentáře'}>
-        {(featuredTab==='favorites'?favorites:shownMessages).map(m=><div className={'compact-item '+(featuredId===m.id?'picked':'')} key={m.id}>
+        <div className="lp-tab-content" key={featuredTab}>{(featuredTab==='favorites'?favorites:shownMessages).map(m=><div className={'compact-item '+(featuredId===m.id?'picked':'')} key={m.id}>
           <span className="featured-comment"><strong>{m.author}</strong><span>{m.text}</span></span>
           <button className="small-button featured-action" onClick={()=>featureMessage(m.id)}>Zvýraznit</button>
         </div>)}
-        {(featuredTab==='favorites'?favorites:shownMessages).length===0&&<Empty>{featuredTab==='favorites'?'Žádné oblíbené komentáře čekající na zobrazení.':'Zatím nebyl zobrazen žádný komentář.'}</Empty>}
+        {(featuredTab==='favorites'?favorites:shownMessages).length===0&&<Empty>{featuredTab==='favorites'?'Žádné oblíbené komentáře čekající na zobrazení.':'Zatím nebyl zobrazen žádný komentář.'}</Empty>}</div>
       </div>
     </Module>
     <Module name="EVENT" status={(eventPaused?'Pozastaveno · ':'')+'Fronta: '+events.length} collapsed={collapsed.EVENT} onToggle={()=>toggle('EVENT')}>
       <div className="panel-state lp-event-state">
         <div className="lp-live-state-top"><Status type={eventPaused?'warn':activeEvent?'good':'neutral'}>{eventPaused?'Pozastaveno':activeEvent?'Aktuální událost':'Čeká na událost'}</Status></div>
-        {activeEvent?<p><strong>{activeEvent.type} · {activeEvent.author}</strong><span>{activeEvent.detail}</span></p>:<p>Žádná aktuální událost.</p>}
+        <p key={activeEvent?.id||'event-empty'} className="lp-content-change">{activeEvent?<><strong>{activeEvent.type} · {activeEvent.author}</strong><span>{activeEvent.detail}</span></>:'Žádná aktuální událost.'}</p>
       </div>
       <div className="lp-live-controls lp-event-controls">
         <Buttons>
@@ -212,15 +224,15 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
           <PanelButton onClick={finishEvent} disabled={!activeEvent}><SkipForward size={15}/> Ukončit</PanelButton>
         </Buttons>
       </div>
-      <div className="lp-event-tabs" role="tablist" aria-label="Zásobník EVENT">
+      <div className="lp-event-tabs lp-motion-tabs" data-tab={eventTab} role="tablist" aria-label="Zásobník EVENT">
         <button role="tab" aria-selected={eventTab==='waiting'} className={eventTab==='waiting'?'selected':''} onClick={()=>setEventTab('waiting')}>Čekající ({events.length})</button>
         <button role="tab" aria-selected={eventTab==='history'} className={eventTab==='history'?'selected':''} onClick={()=>setEventTab('history')}>Historie ({eventHistory.length})</button>
       </div>
       <div className="lp-event-list" role="tabpanel" aria-label={eventTab==='waiting'?'Čekající události':'Historie odbavených událostí'}>
-        {(eventTab==='waiting'?events:eventHistory).map(e=><div className="compact-item" key={e.id}>
+        <div className="lp-tab-content" key={eventTab}>{(eventTab==='waiting'?events:eventHistory).map(e=><div className="compact-item" key={e.id}>
           <span className="lp-event-entry"><strong>{e.type} · {e.author}</strong><span>{e.detail}</span></span>
         </div>)}
-        {(eventTab==='waiting'?events:eventHistory).length===0&&<Empty>{eventTab==='waiting'?'Fronta je prázdná.':'Dosud nebyla dokončena žádná událost.'}</Empty>}
+        {(eventTab==='waiting'?events:eventHistory).length===0&&<Empty>{eventTab==='waiting'?'Fronta je prázdná.':'Dosud nebyla dokončena žádná událost.'}</Empty>}</div>
       </div>
       <div className="lp-add-action"><PanelButton onClick={()=>setEvents(list=>[...list,{id:'evt-'+Date.now(),type:'Super Sticker',author:'Testovací divák',detail:'Ukázková událost'}])}><Plus size={15}/> Přidat testovací událost</PanelButton></div>
     </Module>
@@ -232,7 +244,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
           <Status type={tickerRunning?'good':tickerPhase==='idle'?'neutral':'warn'}>{tickerPhase==='idle'?'Automatika neběží':tickerRunning?'Dávka běží':'Pozastaveno'}</Status>
           {tickerPhase!=='idle'&&<span className="lp-ticker-countdown" aria-label={tickerPhase==='show'?'Zbývající čas zprávy':'Čas do další dávky'} title={tickerPhase==='show'?'Do konce zprávy':'Do další dávky'}><Clock3 size={13}/>{tickerCountdown} s</span>}
         </div>
-        <p>{tickerCurrent?tickerCurrentText:'Žádná aktuálně vysílaná zpráva.'}</p>
+        <p key={tickerCurrent||tickerPhase} className="lp-content-change">{tickerCurrent?tickerCurrentText:'Žádná aktuálně vysílaná zpráva.'}</p>
       </div>
       <div className="lp-ticker-controls"><Buttons>
         <PanelButton primary onClick={sendTicker} disabled={!tickerItems.some(t=>t.enabled)}><Play size={15}/> {tickerPhase==='idle'?'Spustit dávku':tickerPhase==='between'?'Spustit nyní':'Další zpráva'}</PanelButton>
@@ -273,7 +285,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
         </button>
         <div className={'lp-animated-disclosure '+(tickerLibraryOpen?'is-open':'')} inert={!tickerLibraryOpen}>
           <div className="lp-animated-disclosure-inner">
-            {tickerItems.map(item=><div className={'lp-library-row lp-ticker-row '+(tickerCurrent===item.id?'lp-row-active':'')} key={item.id}>
+            {tickerItems.map(item=><div className={'lp-library-row lp-ticker-row '+(tickerCurrent===item.id?'lp-row-active ':'')+(recentSave?.kind==='ticker'&&recentSave.id===item.id?'lp-save-flash':'')} key={item.id}>
               <label className="lp-checkbox-line lp-ticker-checkbox"><input type="checkbox" checked={item.enabled} onChange={e=>setTickerItems(rows=>rows.map(row=>row.id===item.id?{...row,enabled:e.target.checked}:row))} aria-label={'Zahrnout zprávu: '+item.text}/></label>
               {tickerEdit===item.id?
                 <input className="lp-inline-text" autoFocus aria-label="Upravit text zprávy" value={tickerDraft}
@@ -298,7 +310,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     </Module>
     <Module name="EDITORIAL" status={editorialCurrent?'Aktivní titulek':'Žádný aktivní titulek'} collapsed={collapsed.EDITORIAL} onToggle={()=>toggle('EDITORIAL')}>
       <div className="panel-state lp-editorial-status">
-        <div className="lp-editorial-status-copy">
+        <div className="lp-editorial-status-copy" key={editorialCurrent?.id||'editorial-empty'}>
           {editorialCurrent?<><strong>{editorialCurrent.heading}</strong><span>{editorialCurrent.subheading}</span></>:<span className="lp-editorial-empty">Momentálně není zobrazen žádný titulek.</span>}
         </div>
         <button type="button" className="lp-icon-action lp-editorial-quick-hide" title="Skrýt aktivní titulek" aria-label="Skrýt aktivní titulek" disabled={!editorialCurrent} onClick={hideEditorial}><EyeOff size={18}/></button>
@@ -310,7 +322,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
         </button>
         <div className={'lp-animated-disclosure '+(showEditorialLibrary?'is-open':'')} inert={!showEditorialLibrary}>
           <div className="lp-animated-disclosure-inner">
-            {editorial.map(item=><div className={'lp-library-row lp-editorial-row '+(editorialCurrent?.id===item.id?'lp-row-active':'')} key={item.id}>
+            {editorial.map(item=><div className={'lp-library-row lp-editorial-row '+(editorialCurrent?.id===item.id?'lp-row-active ':'')+(recentSave?.kind==='editorial'&&recentSave.id===item.id?'lp-save-flash':'')} key={item.id}>
               {editorialEdit===item.id?
                 <div className="lp-inline-editorial-fields">
                   <input autoFocus aria-label="Nadpis titulku" value={editorialDraft.heading}
