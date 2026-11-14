@@ -15,7 +15,10 @@ const load=():Configs=>({
 });
 function lineList(value:string){return value.split('\n').map(v=>v.trim()).filter(Boolean).slice(0,80);}
 function Lines({label,value,onChange,onBlur,help}:{label:string;value:string[];onChange:(v:string[])=>void;onBlur:()=>void;help?:string}){
-  return <Field label={label} help={help}><textarea rows={4} value={value.join('\n')} onChange={e=>onChange(lineList(e.target.value))} onBlur={onBlur}/></Field>;
+  const [text,setText]=useState(()=>value.join('\\n'));
+  const normalized=value.join('\\n');
+  useEffect(()=>setText(normalized),[normalized]);
+  return <Field label={label} help={help}><textarea rows={4} value={text} onChange={e=>{setText(e.target.value);onChange(lineList(e.target.value));}} onBlur={onBlur}/></Field>;
 }
 export default function SceneEditor({kind}:{kind:SceneKind}) {
   const [saved,setSaved]=useState<Configs>(load);
