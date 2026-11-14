@@ -1,4 +1,4 @@
-export type ArchiveItem = { id: string; date: string; source: string; kind: 'Komentář' | 'Super Chat' | 'Členství'; author: string; content: string };
+export type ArchiveItem = { id: string; date: string; source: string; kind: 'Komentář' | 'Super Chat' | 'Členství'; author: string; content: string; featuredShown?: boolean };
 export const sampleArchive: ArchiveItem[] = [
   { id:'a01',date:'2026-11-10T18:01:00',source:'Nový grafikon se blíží',kind:'Komentář',author:'Petr Novotný',content:'Zdravím všechny ve studiu!' },
   { id:'a02',date:'2026-11-10T18:02:00',source:'Nový grafikon se blíží',kind:'Komentář',author:'Dopravní nadšenec',content:'Budete řešit i změny v prosincovém grafikonu?' },

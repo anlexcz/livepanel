@@ -5,7 +5,7 @@ import { initialEditorial, initialEvents, initialTicker, type EditorialItem, typ
 import type { Category, Message } from '../mock/data';
 
 type Props={
-  messages:Message[]; favorites:Message[]; featuredId:string|null; onFeature:(id:string|null)=>void;
+  messages:Message[]; favorites:Message[]; shownMessages:Message[]; featuredId:string|null; onFeature:(id:string|null)=>void;
   collapsed:Record<Category,boolean>; toggle:(category:Category)=>void;
 };
 function Module({name,status,collapsed,onToggle,children}:{name:Category;status:string;collapsed:boolean;onToggle:()=>void;children:React.ReactNode}){
@@ -15,7 +15,8 @@ function Module({name,status,collapsed,onToggle,children}:{name:Category;status:
     {!collapsed&&<div className="panel-body">{children}</div>}
   </section>;
 }
-export default function DirectingPanels({messages,favorites,featuredId,onFeature,collapsed,toggle}:Props){
+export default function DirectingPanels({messages,favorites,shownMessages,featuredId,onFeature,collapsed,toggle}:Props){
+  const [featuredTab,setFeaturedTab]=useState<'favorites'|'shown'>('favorites');
   const [events,setEvents]=useState<EventItem[]>(initialEvents);
   const [activeEvent,setActiveEvent]=useState<EventItem|null>(null);
   const [eventPaused,setEventPaused]=useState(false);
@@ -67,11 +68,17 @@ export default function DirectingPanels({messages,favorites,featuredId,onFeature
     <div className="directing-live-column">
     <Module name="FEATURED" status={featured?'Zvýrazněn komentář':'Žádný aktivní komentář'} collapsed={collapsed.FEATURED} onToggle={()=>toggle('FEATURED')}>
       <div className="panel-state">{featured?<><Status type="good">Zvýraznění (demo)</Status><p><strong>{featured.author}</strong> · {featured.text}</p></>:<span>Žádný zvýrazněný komentář.</span>}</div>
-      <div className="section-label">Oblíbené komentáře ({favorites.length})</div>
-      {favorites.length?favorites.map(m=><div className={'compact-item '+(featuredId===m.id?'picked':'')} key={m.id}>
-        <span className="featured-comment"><strong>{m.author}</strong><span>{m.text}</span></span>
-        <button className="small-button featured-action" onClick={()=>onFeature(m.id)}>Zvýraznit</button>
-      </div>):<Empty>Žádné oblíbené komentáře.</Empty>}
+      <div className="featured-tabs" role="tablist" aria-label="Zásobník FEATURED">
+        <button role="tab" aria-selected={featuredTab==='favorites'} className={featuredTab==='favorites'?'selected':''} onClick={()=>setFeaturedTab('favorites')}>Oblíbené ({favorites.length})</button>
+        <button role="tab" aria-selected={featuredTab==='shown'} className={featuredTab==='shown'?'selected':''} onClick={()=>setFeaturedTab('shown')}>Zobrazeno ({shownMessages.length})</button>
+      </div>
+      <div className="featured-list" role="tabpanel" aria-label={featuredTab==='favorites'?'Dosud nezobrazené oblíbené':'Zobrazené komentáře'}>
+        {(featuredTab==='favorites'?favorites:shownMessages).map(m=><div className={'compact-item '+(featuredId===m.id?'picked':'')} key={m.id}>
+          <span className="featured-comment"><strong>{m.author}</strong><span>{m.text}</span></span>
+          <button className="small-button featured-action" onClick={()=>onFeature(m.id)}>Zvýraznit</button>
+        </div>)}
+        {(featuredTab==='favorites'?favorites:shownMessages).length===0&&<Empty>{featuredTab==='favorites'?'Žádné oblíbené komentáře čekající na zobrazení.':'Zatím nebyl zobrazen žádný komentář.'}</Empty>}
+      </div>
       {featured&&<Buttons><PanelButton danger onClick={()=>onFeature(null)}><EyeOff size={15}/> Skrýt</PanelButton><PanelButton onClick={()=>onFeature(featured.id)}><RotateCcw size={15}/> Prodloužit (demo)</PanelButton></Buttons>}
     </Module>
     <Module name="EVENT" status={(eventPaused?'Pozastaveno · ':'')+'Fronta: '+events.length} collapsed={collapsed.EVENT} onToggle={()=>toggle('EVENT')}>
@@ -81,7 +88,7 @@ export default function DirectingPanels({messages,favorites,featuredId,onFeature
         <button className="lp-inline-disclosure" onClick={()=>setEventExpanded(v=>!v)} aria-expanded={eventExpanded}>Čekající události ({events.length}) {eventExpanded?<ChevronUp size={16}/>:<ChevronDown size={16}/>}</button>
         {eventExpanded&&<>{events.map(e=><div className="compact-item" key={e.id}><span><strong>{e.type}</strong> · {e.author}<br/><small>{e.detail}</small></span><PanelButton onClick={()=>{setEvents(list=>list.filter(x=>x.id!==e.id));setActiveEvent(e)}}>Předřadit</PanelButton></div>)}{!events.length&&<Empty>Fronta je prázdná.</Empty>}</>}
       </div>
-      <PanelButton onClick={()=>setEvents(list=>[...list,{id:'evt-'+Date.now(),type:'Super Sticker',author:'Testovací divák',detail:'Ukázková událost'}])}><Plus size={15}/> Přidat testovací událost</PanelButton>
+      <div className="lp-add-action"><PanelButton onClick={()=>setEvents(list=>[...list,{id:'evt-'+Date.now(),type:'Super Sticker',author:'Testovací divák',detail:'Ukázková událost'}])}><Plus size={15}/> Přidat testovací událost</PanelButton></div>
     </Module>
     </div>
     <div className="directing-content-column">
@@ -94,7 +101,7 @@ export default function DirectingPanels({messages,favorites,featuredId,onFeature
         <button className="lp-text-action" onClick={()=>startTickerEdit(item)}>Upravit</button>
       </div>)}
       {tickerEdit&&<div className="lp-inline-editor"><label>Text zprávy<textarea rows={2} value={tickerDraft} onChange={e=>setTickerDraft(e.target.value)}/></label><Buttons><PanelButton primary onClick={saveTicker} disabled={!tickerDraft.trim()}>Uložit (demo)</PanelButton><PanelButton onClick={()=>setTickerEdit(null)}>Zrušit</PanelButton></Buttons></div>}
-      <PanelButton onClick={()=>startTickerEdit()}><Plus size={15}/> Přidat zprávu</PanelButton>
+      <div className="lp-add-action"><PanelButton onClick={()=>startTickerEdit()}><Plus size={15}/> Přidat zprávu</PanelButton></div>
       <p className="lp-muted">Automatické dávkování a serverové časování nejsou implementovány; položky se v demo režimu posouvají ručně.</p>
     </Module>
     <Module name="EDITORIAL" status={editorialCurrent?'Aktivní titulek':'Žádný aktivní titulek'} collapsed={collapsed.EDITORIAL} onToggle={()=>toggle('EDITORIAL')}>
@@ -104,7 +111,7 @@ export default function DirectingPanels({messages,favorites,featuredId,onFeature
         <div className="section-label">Knihovna titulků ({editorial.length})</div>
         {editorial.map(item=><div className="lp-library-row" key={item.id}><div className="lp-library-text"><strong>{item.heading}</strong><small>{item.subheading}</small></div><Buttons><PanelButton primary onClick={()=>setEditorialCurrent({...item})}>Zobrazit</PanelButton><PanelButton onClick={()=>startEditorialEdit(item)}>Upravit</PanelButton><button title="Smazat z knihovny" className="lp-text-action" onClick={()=>{if(window.confirm('Odstranit položku z ukázkové knihovny? Aktivní titulek zůstane zobrazen.'))setEditorial(rows=>rows.filter(x=>x.id!==item.id))}}>Smazat</button></Buttons></div>)}
         {editorialEdit&&<div className="lp-inline-editor"><label>Nadpis<input value={editorialDraft.heading} onChange={e=>setEditorialDraft(v=>({...v,heading:e.target.value}))}/></label><label>Podtitulek<input value={editorialDraft.subheading} onChange={e=>setEditorialDraft(v=>({...v,subheading:e.target.value}))}/></label><Buttons><PanelButton primary onClick={saveEditorial} disabled={!editorialDraft.heading.trim()}>Uložit (demo)</PanelButton><PanelButton onClick={()=>setEditorialEdit(null)}>Zrušit</PanelButton></Buttons></div>}
-        <PanelButton onClick={()=>startEditorialEdit()}><Plus size={15}/> Přidat titulek</PanelButton>
+        <div className="lp-add-action"><PanelButton onClick={()=>startEditorialEdit()}><Plus size={15}/> Přidat titulek</PanelButton></div>
       </div>}
     </Module>
     </div>
