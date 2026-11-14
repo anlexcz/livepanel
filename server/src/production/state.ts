@@ -44,7 +44,7 @@ export function validateProductionState(value: unknown): asserts value is Produc
   if (!Array.isArray(event.queue) || event.queue.some((item: unknown) => typeof item !== 'string' || !item.trim()) || typeof event.paused !== 'boolean') throw new Error('Invalid event queue');
   const ticker = record(state.ticker);
   keys(ticker, ['status','position']);
-  if (typeof ticker.status !== 'string' || !['stopped','running','paused'].includes(ticker.status)) || typeof ticker.position !== 'number' || !Number.isSafeInteger(ticker.position) || ticker.position < 0) throw new Error('Invalid ticker');
+  if (typeof ticker.status !== 'string' || !['stopped','running','paused'].includes(ticker.status) || typeof ticker.position !== 'number' || !Number.isSafeInteger(ticker.position) || ticker.position < 0) throw new Error('Invalid ticker');
   const editorial = record(state.editorial);
   keys(editorial, ['itemId']);
   if (editorial.itemId !== null && (typeof editorial.itemId !== 'string' || !editorial.itemId.trim())) throw new Error('Invalid editorial reference');
