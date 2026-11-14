@@ -49,7 +49,7 @@ test('FEATURED timeout is committed and broadcast once, without a new command ro
   assert.equal(store.read().revision,3);
   assert.deepEqual(seen.map(u=>u.revision),[1,2,3]);
   assert.equal(seen[2].category,'featured');
-  assert.equal(active,null);
+  assert.equal(active.timer,null);
   assert.equal((db.prepare('SELECT count(*) AS n FROM production_commands').get() as {n:number}).n,2);
   runtime.stop();
 }));
