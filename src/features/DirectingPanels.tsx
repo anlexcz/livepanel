@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, ChevronDown, ChevronUp, Clock3, EyeOff, List, Pause, Pencil, Play, Plus, RotateCcw, SkipForward, Star, Trash2, Type, X, Zap } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Clock3, EyeOff, List, Pause, Pencil, Play, Plus, SkipForward, Star, Trash2, Type, X, Zap } from 'lucide-react';
 import { Buttons, Empty, PanelButton, Status } from '../components/Ui';
 import { initialEditorial, initialEvents, initialTicker, type EditorialItem, type EventItem, type TickerItem } from '../mock/directing';
 import type { Category, Message } from '../mock/data';
@@ -20,7 +20,36 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   const [events,setEvents]=useState<EventItem[]>(initialEvents);
   const [activeEvent,setActiveEvent]=useState<EventItem|null>(null);
   const [eventPaused,setEventPaused]=useState(false);
-  const [eventExpanded,setEventExpanded]=useState(false);
+  const [eventTab,setEventTab]=useState<'waiting'|'history'>('waiting');
+  const [eventHistory,setEventHistory]=useState<EventItem[]>([]);
+  const [featuredDeadline,setFeaturedDeadline]=useState<number|null>(null);
+  const [featuredRemaining,setFeaturedRemaining]=useState(0);
+  // The browser timer is for this demo only; the server will own production expiry.
+  useEffect(()=>{
+    if(!featuredId){setFeaturedDeadline(null);setFeaturedRemaining(0);return;}
+    const deadline=Date.now()+60000;setFeaturedDeadline(deadline);setFeaturedRemaining(60);
+  },[featuredId]);
+  useEffect(()=>{
+    if(featuredDeadline===null)return;
+    const interval=window.setInterval(()=>{
+      const remaining=Math.max(0,Math.ceil((featuredDeadline-Date.now())/1000));
+      setFeaturedRemaining(remaining);
+      if(remaining===0){window.clearInterval(interval);onFeature(null);}
+    },250);
+    return ()=>window.clearInterval(interval);
+  },[featuredDeadline,onFeature]);
+  function extendFeatured(){
+    if(!featuredId)return;
+    setFeaturedDeadline(value=>Math.max(Date.now(),value??Date.now())+30000);
+    setFeaturedRemaining(v=>v+30);
+  }
+  function featureMessage(id:string){onFeature(id);}
+  function finishEvent(){
+    if(!activeEvent)return;
+    setEventHistory(previous=>[...previous,activeEvent]);
+    setActiveEvent(null);
+  }
+
   const [tickerItems,setTickerItems]=useState<TickerItem[]>(initialTicker);
   const [tickerRunning,setTickerRunning]=useState(false);
   const [tickerCurrent,setTickerCurrent]=useState<string|null>(null);
@@ -58,9 +87,11 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   const [showEditorialLibrary,setShowEditorialLibrary]=useState(false);
   const featured=messages.find(m=>m.id===featuredId);
   function nextEvent(){
-    if(eventPaused)return;
+    if(eventPaused||!events.length)return;
+    // The existing item is completed before the next queued item starts.
+    if(activeEvent)setEventHistory(previous=>[...previous,activeEvent]);
+    setActiveEvent(events[0]);
     setEvents(previous=>previous.slice(1));
-    setActiveEvent(events[0]||null);
   }
   // Local demo only. Each interval is measured between starts of batches.
   function stopTicker(){
@@ -144,7 +175,19 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   return <>
     <div className="directing-live-column">
     <Module name="FEATURED" status={featured?'Zvýrazněn komentář':'Žádný aktivní komentář'} collapsed={collapsed.FEATURED} onToggle={()=>toggle('FEATURED')}>
-      <div className="panel-state">{featured?<><Status type="good">Zvýrazněno</Status><p><strong>{featured.author}</strong> · {featured.text}</p></>:<span>Žádný zvýrazněný komentář.</span>}</div>
+      <div className="panel-state lp-featured-state">
+        <div className="lp-live-state-top">
+          <Status type={featured?'good':'neutral'}>{featured?'Zvýrazněno':'Bez zvýraznění'}</Status>
+          {featured&&<span className="lp-live-countdown" title="Zbývající čas lokálního náhledu"><Clock3 size={13}/>{featuredRemaining} s</span>}
+        </div>
+        {featured?<p><strong>{featured.author}</strong> · {featured.text}</p>:<p>Žádný zvýrazněný komentář.</p>}
+      </div>
+      <div className="lp-live-controls">
+        <Buttons>
+          <PanelButton onClick={extendFeatured} disabled={!featured}><Clock3 size={15}/> +30 s</PanelButton>
+          <PanelButton danger onClick={()=>onFeature(null)} disabled={!featured}><EyeOff size={15}/> Skrýt</PanelButton>
+        </Buttons>
+      </div>
       <div className="featured-tabs" role="tablist" aria-label="Zásobník FEATURED">
         <button role="tab" aria-selected={featuredTab==='favorites'} className={featuredTab==='favorites'?'selected':''} onClick={()=>setFeaturedTab('favorites')}>Oblíbené ({favorites.length})</button>
         <button role="tab" aria-selected={featuredTab==='shown'} className={featuredTab==='shown'?'selected':''} onClick={()=>setFeaturedTab('shown')}>Zobrazeno ({shownMessages.length})</button>
@@ -152,18 +195,32 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
       <div className="featured-list" role="tabpanel" aria-label={featuredTab==='favorites'?'Dosud nezobrazené oblíbené':'Zobrazené komentáře'}>
         {(featuredTab==='favorites'?favorites:shownMessages).map(m=><div className={'compact-item '+(featuredId===m.id?'picked':'')} key={m.id}>
           <span className="featured-comment"><strong>{m.author}</strong><span>{m.text}</span></span>
-          <button className="small-button featured-action" onClick={()=>onFeature(m.id)}>Zvýraznit</button>
+          <button className="small-button featured-action" onClick={()=>featureMessage(m.id)}>Zvýraznit</button>
         </div>)}
         {(featuredTab==='favorites'?favorites:shownMessages).length===0&&<Empty>{featuredTab==='favorites'?'Žádné oblíbené komentáře čekající na zobrazení.':'Zatím nebyl zobrazen žádný komentář.'}</Empty>}
       </div>
-      {featured&&<Buttons><PanelButton danger onClick={()=>onFeature(null)}><EyeOff size={15}/> Skrýt</PanelButton><PanelButton onClick={()=>onFeature(featured.id)}><RotateCcw size={15}/> Prodloužit</PanelButton></Buttons>}
     </Module>
     <Module name="EVENT" status={(eventPaused?'Pozastaveno · ':'')+'Fronta: '+events.length} collapsed={collapsed.EVENT} onToggle={()=>toggle('EVENT')}>
-      <div className="panel-state"><Status type={eventPaused?'warn':activeEvent?'good':'neutral'}>{eventPaused?'Čeká – pozastaveno':activeEvent?'Aktuální událost':'Čeká na událost'}</Status>{activeEvent&&<p><strong>{activeEvent.type} · {activeEvent.author}</strong><br/>{activeEvent.detail}</p>}</div>
-      <Buttons><PanelButton onClick={()=>setEventPaused(x=>!x)}>{eventPaused?<Play size={15}/>:<Pause size={15}/>} {eventPaused?'Pokračovat':'Pozastavit'}</PanelButton><PanelButton primary onClick={nextEvent} disabled={eventPaused||!events.length}><Play size={15}/> Odbavit další</PanelButton>{activeEvent&&<PanelButton onClick={()=>setActiveEvent(null)}><SkipForward size={15}/> Ukončit</PanelButton>}</Buttons>
-      <div className="lp-subsection">
-        <button className="lp-inline-disclosure" onClick={()=>setEventExpanded(v=>!v)} aria-expanded={eventExpanded}>Čekající události ({events.length}) {eventExpanded?<ChevronUp size={16}/>:<ChevronDown size={16}/>}</button>
-        {eventExpanded&&<>{events.map(e=><div className="compact-item" key={e.id}><span><strong>{e.type}</strong> · {e.author}<br/><small>{e.detail}</small></span><PanelButton onClick={()=>{setEvents(list=>list.filter(x=>x.id!==e.id));setActiveEvent(e)}}>Předřadit</PanelButton></div>)}{!events.length&&<Empty>Fronta je prázdná.</Empty>}</>}
+      <div className="panel-state lp-event-state">
+        <div className="lp-live-state-top"><Status type={eventPaused?'warn':activeEvent?'good':'neutral'}>{eventPaused?'Pozastaveno':activeEvent?'Aktuální událost':'Čeká na událost'}</Status></div>
+        {activeEvent?<p><strong>{activeEvent.type} · {activeEvent.author}</strong><span>{activeEvent.detail}</span></p>:<p>Žádná aktuální událost.</p>}
+      </div>
+      <div className="lp-live-controls lp-event-controls">
+        <Buttons>
+          <PanelButton onClick={()=>setEventPaused(x=>!x)}>{eventPaused?<Play size={15}/>:<Pause size={15}/>} {eventPaused?'Pokračovat':'Pozastavit'}</PanelButton>
+          <PanelButton primary onClick={nextEvent} disabled={eventPaused||!events.length}><Play size={15}/> Odbavit další</PanelButton>
+          <PanelButton onClick={finishEvent} disabled={!activeEvent}><SkipForward size={15}/> Ukončit</PanelButton>
+        </Buttons>
+      </div>
+      <div className="lp-event-tabs" role="tablist" aria-label="Zásobník EVENT">
+        <button role="tab" aria-selected={eventTab==='waiting'} className={eventTab==='waiting'?'selected':''} onClick={()=>setEventTab('waiting')}>Čekající ({events.length})</button>
+        <button role="tab" aria-selected={eventTab==='history'} className={eventTab==='history'?'selected':''} onClick={()=>setEventTab('history')}>Historie ({eventHistory.length})</button>
+      </div>
+      <div className="lp-event-list" role="tabpanel" aria-label={eventTab==='waiting'?'Čekající události':'Historie odbavených událostí'}>
+        {(eventTab==='waiting'?events:eventHistory).map(e=><div className="compact-item" key={e.id}>
+          <span className="lp-event-entry"><strong>{e.type} · {e.author}</strong><span>{e.detail}</span></span>
+        </div>)}
+        {(eventTab==='waiting'?events:eventHistory).length===0&&<Empty>{eventTab==='waiting'?'Fronta je prázdná.':'Dosud nebyla dokončena žádná událost.'}</Empty>}
       </div>
       <div className="lp-add-action"><PanelButton onClick={()=>setEvents(list=>[...list,{id:'evt-'+Date.now(),type:'Super Sticker',author:'Testovací divák',detail:'Ukázková událost'}])}><Plus size={15}/> Přidat testovací událost</PanelButton></div>
     </Module>
