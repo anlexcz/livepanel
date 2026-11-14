@@ -191,7 +191,7 @@ export default function SceneEditor({kind}:{kind:SceneKind}) {
               <option value="dark">Černý</option><option value="white">Bílý</option><option value="checker">Šachovnice</option><option value="sample">Zkušební scéna</option>
             </select>
           </div>
-          <ScenePreview kind={kind} intro={preview.intro} pause={preview.break} outro={preview.outro} elapsed={elapsed} duration={duration} background={background} hasStarted={started} supporters={supporters}/>
+          <ScenePreview kind={kind} intro={preview.intro} pause={preview.break} outro={preview.outro} elapsed={elapsed} duration={duration} background={background} hasStarted={started} playing={playing} supporters={supporters}/>
           <div className="lp-preview-controls">
             <PanelButton onClick={()=>playing?setPlaying(false):play()}>{playing?<Pause size={16}/>:<Play size={16}/>} {playing?'Pozastavit':finished?'Přehrát znovu':started?'Pokračovat':'Přehrát'}</PanelButton>
             <PanelButton onClick={resetPreview}><RotateCcw size={15}/> Reset</PanelButton>
