@@ -19,7 +19,7 @@ export default function DiagnosticsPage(){
     <Surface title="Testovací scénář" subtitle="Vyzkoušení vizuálních stavů bez ovlivnění režie">
       <div className="lp-button-row lp-segment">
         {[['normal','Výchozí'],['collector','Výpadek Collectoru'],['overlay','OBS offline'],['storage','Chyba ukládání']].map(([value,label])=>
-          <button key={value} className={view===value?'is-selected':''} onClick={()=>setView(value as typeof view)}>{label}</button>)}
+          <button type="button" key={value} className={view===value?'is-selected':''} onClick={()=>setView(value as typeof view)}>{label}</button>)}
       </div>
     </Surface>
     {view!=='normal'&&<div className="lp-diagnostic-warning"><AlertTriangle size={18}/><div><strong>{view==='collector'?'Collector není dostupný':view==='overlay'?'Grafický overlay je odpojený':'Ukládání produkčního stavu selhalo'}</strong><p>{view==='overlay'?'Simulace stavu po překročení desetisekundového limitu.': 'Pouze testovací scénář bez skutečného provozu.'}</p></div></div>}
