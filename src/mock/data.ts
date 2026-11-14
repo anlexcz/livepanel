@@ -1,4 +1,4 @@
-export type Message = { id: string; author: string; text: string; time: string; favorite: boolean; role?: 'moderator' | 'member' };
+export type Message = { id: string; author: string; text: string; time: string; favorite: boolean; featuredShown?: boolean; role?: 'moderator' | 'member' };
 export type Category = 'FEATURED' | 'EVENT' | 'TICKER' | 'EDITORIAL';
 export const initialMessages: Message[] = [
   { id: 'm1', author: 'Petr Novotný', text: 'Zdravím všechny, těším se na dnešní vysílání!', time: '19:00', favorite: false },
