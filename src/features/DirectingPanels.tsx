@@ -60,6 +60,8 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   }
 
   const [tickerItems,setTickerItems]=useState<TickerItem[]>(initialTicker);
+  // Snapshot of the current batch: editing the library affects only future batches.
+  const [tickerBatchItems,setTickerBatchItems]=useState<TickerItem[]>([]);
   const [tickerRunning,setTickerRunning]=useState(false);
   const [tickerCurrent,setTickerCurrent]=useState<string|null>(null);
   const [tickerCurrentText,setTickerCurrentText]=useState('');
@@ -106,6 +108,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
   function stopTicker(){
     setTickerRunning(false);setTickerCurrent(null);setTickerCurrentText('');setTickerPhase('idle');
     setTickerBatchStart(null);setTickerNextAt(null);setTickerPauseTime(null);
+    setTickerBatchItems([]);
   }
   function beginTickerBatch(){
     const enabled=tickerItems.filter(t=>t.enabled);
@@ -113,6 +116,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     const now=Date.now(),duration=Math.max(1,Math.round(tickerDuration));
     const interval=Math.max(10,Math.round(tickerInterval*60));
     setTickerEffectiveDuration(duration);setTickerEffectiveInterval(interval);
+    setTickerBatchItems(enabled.map(item=>({...item})));
     setTickerBatchStart(now);setTickerPhase('show');setTickerCurrent(enabled[0].id);setTickerCurrentText(enabled[0].text);
     setTickerNextAt(now+duration*1000);setTickerCountdown(duration);
     setTickerRunning(true);setTickerPauseTime(null);
@@ -127,13 +131,13 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     }
   }
   function advanceTicker(){
-    const enabled=tickerItems.filter(t=>t.enabled);
-    const index=enabled.findIndex(t=>t.id===tickerCurrent),now=Date.now();
-    if(index>=0&&index+1<enabled.length){
-      setTickerCurrent(enabled[index+1].id);setTickerCurrentText(enabled[index+1].text);setTickerNextAt(now+tickerEffectiveDuration*1000);
+    // Continue the original batch even if an item was edited, unchecked or deleted.
+    const index=tickerBatchItems.findIndex(t=>t.id===tickerCurrent),now=Date.now();
+    if(index>=0&&index+1<tickerBatchItems.length){
+      setTickerCurrent(tickerBatchItems[index+1].id);setTickerCurrentText(tickerBatchItems[index+1].text);setTickerNextAt(now+tickerEffectiveDuration*1000);
       setTickerCountdown(tickerEffectiveDuration);return;
     }
-    setTickerCurrent(null);setTickerCurrentText('');setTickerPhase('between');
+    setTickerCurrent(null);setTickerCurrentText('');setTickerBatchItems([]);setTickerPhase('between');
     const wait=Math.max(now,(tickerBatchStart||now)+tickerEffectiveInterval*1000);
     setTickerNextAt(wait);setTickerCountdown(Math.ceil((wait-now)/1000));
   }
@@ -147,7 +151,7 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
       }
     },250);
     return ()=>window.clearInterval(timer);
-  },[tickerRunning,tickerNextAt,tickerPhase,tickerCurrent,tickerItems,tickerDuration,tickerInterval,tickerEffectiveDuration,tickerEffectiveInterval,tickerBatchStart]);
+  },[tickerRunning,tickerNextAt,tickerPhase,tickerCurrent,tickerBatchItems,tickerItems,tickerDuration,tickerInterval,tickerEffectiveDuration,tickerEffectiveInterval,tickerBatchStart]);
   function sendTicker(){
     if(tickerPhase==='idle'||tickerPhase==='between')beginTickerBatch();
     else advanceTicker();
