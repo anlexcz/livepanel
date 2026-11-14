@@ -82,7 +82,6 @@ export class YouTubeCollector {
   }
   private async run(liveChatId:string,signal:AbortSignal):Promise<void> {
     const pause=this.options.delay??abortableDelay;
-    const clock=this.options.clock??Date.now;
     const threshold=Math.max(1,this.options.streamFailuresBeforeFallback??3);
     const retryPolls=Math.max(1,this.options.fallbackPollsBeforeRetry??5);
     let method:CollectorMethod='streamList';
@@ -102,16 +101,22 @@ export class YouTubeCollector {
             if(safeToken(batch.nextPageToken))streamToken=batch.nextPageToken;
             initial=false;
             failures=0;
-            if(batch.offlineAt)throw new Error('stream ended');
+            if(batch.offlineAt)throw new Error('YOUTUBE_CHAT_ENDED');
           }
           if(signal.aborted)return;
           throw new Error('stream disconnected');
         }catch(raw){
           if(signal.aborted)return;
-          const err=classifyError(raw);
-          if(err.reason!=='transient') {this.report({status:'error',method,reason:err.reason});return;}
+          const err=raw instanceof Error&&raw.message==='YOUTUBE_CHAT_ENDED'
+            ?new Error('YouTube chat ended'):classifyError(raw);
+          if(raw instanceof Error&&raw.message==='YOUTUBE_CHAT_ENDED') {
+            this.report({status:'error',method,reason:'ended'});return;
+          }
+          if(err instanceof Error && !(err instanceof Error && 'reason' in err))throw err;
+          const categorized=classifyError(err);
+          if(categorized.reason!=='transient') {this.report({status:'error',method,reason:categorized.reason});return;}
           failures++;
-          this.report({status:'reconnecting',method,reason:err.reason,reconnectCount:this.current.reconnectCount+1});
+          this.report({status:'reconnecting',method,reason:categorized.reason,reconnectCount:this.current.reconnectCount+1});
           if(failures>=threshold){method='list';listToken=undefined;continue;}
           await pause(Math.min(30000,1000*2**Math.min(failures-1,5)),signal);
         }
@@ -143,6 +148,5 @@ export class YouTubeCollector {
         }
       }
     }
-    void clock; // clock is available to downstream status timing through ingest.
   }
 }

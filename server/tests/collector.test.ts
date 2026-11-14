@@ -109,7 +109,7 @@ test('repeated stream failures switch to sequential list fallback and use server
       return batch([message(listCalls===1?'old':'new')],listCalls===1?'list-page':'list-next',7500);
     },
     onMessage:item=>{deliveries.push(item);},
-    delay:async(ms)=>{delays.push(ms);},
+    delay:async(ms)=>{delays.push(ms);await new Promise(resolve=>setImmediate(resolve));},
     streamFailuresBeforeFallback:2,fallbackPollsBeforeRetry:2,
   });
   collector.start('chat_1');
@@ -150,7 +150,7 @@ test('downstream processing failure does not acknowledge message or advance cont
     },
     list:async()=>batch([]),
     onMessage:()=>{attempts++;throw new Error('downstream storage unavailable');},
-    delay:async()=>{},
+    delay:async()=>{await new Promise(resolve=>setImmediate(resolve));},
     streamFailuresBeforeFallback:100,
   });
   collector.start('chat_1');
