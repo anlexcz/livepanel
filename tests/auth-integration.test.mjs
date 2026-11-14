@@ -20,7 +20,8 @@ test('real auth client uses same-origin cookies without localStorage and never h
   assert.doesNotMatch(gate,/localStorage|sessionStorage|document\.cookie/);
   assert.match(gate,/setStatus\('authenticated'\)/);
   assert.match(gate,/status==='unavailable'/);
-  assert.match(gate,/\/api\/auth\/password/);
+  assert.match(client,/\/api\/auth\/password/);
+  assert.match(gate,/authClient\.changePassword/);
 });
 
 test('authentication integration does not replace the mock directing state and actions',()=>{
