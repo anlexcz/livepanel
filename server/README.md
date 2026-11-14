@@ -14,16 +14,19 @@ npm run backend:start
 
 GitHub Actions validates the backend and starts a process for an independent HTTP smoke test.
 Environment variables are documented in `../.env.example`; they are read from the process environment (no implicit .env loader).
-The server binds only to loopback by default. It is **not** ready for public exposure: no operator authentication, WebSocket, collector or OBS endpoint exists.
+The server binds only to loopback by default. It is **not** ready for public exposure: no operator authentication, YouTube collector or production OBS overlay exists.
 
 ## SQLite and migrations
 Default path: `./data/livepanel.sqlite` (relative to the working directory). WAL and foreign key enforcement are enabled. Never commit live databases, WAL/SHM files, or credentials. Applied migrations are checked by checksum; already released migrations are immutable.
 
-## Production State Foundation (PR #28)
-An internal `ProductionStore` owns a single SQLite row (`production_state.id = 1`). Its JSON payload contains CHAT, FEATURED, EVENT, TICKER, EDITORIAL; the stream ID is nullable. The row retains a monotonically increasing integer revision even when the active stream is cleared.
+## Production State
+One SQLite row stores the common JSON Production State for CHAT, FEATURED, EVENT, TICKER and EDITORIAL. `ProductionStore` atomically saves revisions and clears expired FEATURED on restart. Active stream is nullable and clearSession does not reset the monotonic revision.
 
-`read()` returns a detached snapshot; `update(change, expectedRevision?)` validates the entire state, persists it inside a synchronous SQLite transaction, and only then returns the new revision. An outdated expected revision throws `RevisionConflictError` without changing data. `clearSession()` explicitly clears the active session. A restart never implicitly starts another stream.
+## PR #29 – Communication Foundation
+The internal `CommandProcessor` validates an allowlist of narrowly scoped commands, records command ID/hash/result in `production_commands` within the same SQLite transaction as the state update, returns deterministic RESULTs for identical retries (including after restart) and publishes an UPDATE only once *after* commit. Changing the payload for the same ID is rejected. `SNAPSHOT` is sent after connection, with no history replay. Commands are synthetic development examples; they are not final UI API contracts.
 
-FEATURED uses an absolute expiration timestamp (`expiresAtMs`). Startup `reconcile()` clears expired items durably; callers must later schedule runtime expiry using the same method. It does not replay old events or chat history. Event queues currently contain only IDs, not YouTube data, and no automatic event processing exists.
+No unauthenticated public WebSocket is available by default. For **isolated local development only**, set `LIVEPANEL_DEV_WS=true` in the process environment, with `LIVEPANEL_HOST=127.0.0.1`. This enables:
+- `ws://127.0.0.1:3100/dev/ws/operator` – commands and operator SNAPSHOT/UPDATE.
+- `ws://127.0.0.1:3100/dev/ws/observer` – sanitized state projection, read-only.
 
-**Not a network contract:** no public state or mutation API has been introduced. Server-side authorization, reference validity/retention checks, command deduplication, timed runtime scheduler, WebSocket COMMAND/RESULT/UPDATE/SNAPSHOT, and OBS projections belong to subsequent PRs. The state schema is a minimal internal baseline and may be extended in forward-only migrations before real data is used.
+The developer gateway validates loopback peer address, localhost Host and exact local Origin, caps incoming frames at 8 KiB and rejects messages from observer clients. **Do not configure a reverse proxy for either /dev/ws path.** A proxy running on the same machine can satisfy the loopback check, so the dev gateway is not a substitute for authenticating operators. Real WSS, HttpOnly sessions, WebSocket authorization, origin policy, OBS rendering, runtime expiry scheduling, YouTube data retention and production overlays remain future PRs.
