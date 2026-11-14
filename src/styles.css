@@ -244,3 +244,14 @@ body{background:var(--lp-bg)}
 .scene-drawer-link{padding-left:42px;font-weight:500}
 .nav-group svg{flex:none;color:#87cefa}
 @media(prefers-reduced-motion:reduce){.scene-group-trigger .rail-group-chevron{transition:none}}
+
+/* FEATURED: single switchable queue for unseen favorites and already shown comments */
+.featured-tabs{display:flex;align-items:center;gap:4px;margin-top:12px;padding:4px;background:#202020}
+.featured-tabs button{border:0;background:transparent;color:#bbb;padding:8px 12px;min-height:34px;text-align:left;font-size:13px}
+.featured-tabs button:hover{color:#fff;background:#292929}
+.featured-tabs button.selected{background:#303030;color:#87cefa;box-shadow:inset 0 -2px #87cefa}
+.featured-list{min-height:0}
+.message-shown-indicator{color:#7d9baa;display:inline-flex;align-items:center;justify-content:center;flex:none;width:22px;height:32px;opacity:.85}
+.message-shown-indicator svg{stroke-width:2.4}
+.lp-add-action{margin-top:14px;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+@media(max-width:760px){.featured-tabs button{min-height:40px}.message-shown-indicator{height:38px}}
