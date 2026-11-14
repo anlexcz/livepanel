@@ -291,3 +291,50 @@ body{background:var(--lp-bg)}
 .lp-timing-custom input{width:100px;background:#252525;color:#fff;border:1px solid #444;padding:6px 8px}
 @media(max-width:760px){.lp-icon-action{width:40px;height:40px}.lp-timing-choices button{min-height:40px}.lp-animated-disclosure .lp-library-row{flex-wrap:nowrap}}
 @media(prefers-reduced-motion:reduce){.lp-animated-disclosure{transition:none}}
+
+/* Live directing polish: stable library geometry and unobtrusive active states */
+.lp-ticker-row{display:grid!important;grid-template-columns:20px minmax(0,1fr) 74px;gap:10px!important;align-items:center;min-height:48px}
+.lp-ticker-row .lp-ticker-checkbox{width:20px;min-width:20px;justify-content:center;flex:none}
+.lp-ticker-row .lp-inline-content{display:block;min-width:0;flex:initial;text-align:left!important;margin:0!important}
+.lp-ticker-row .lp-inline-text{width:100%;min-width:0;flex:initial}
+.lp-ticker-row .lp-row-actions{width:74px;justify-content:flex-end;margin-left:0}
+.lp-row-active{background:#20303a!important;box-shadow:inset 3px 0 #87cefa}
+.lp-row-active .lp-inline-content,.lp-row-active .lp-library-text strong{color:#e6f7ff}
+.lp-timing-choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:min(100%,440px);gap:6px}
+.lp-timing-choices>button,.lp-timing-inline-custom{width:100%;height:37px;min-height:37px}
+.lp-timing-choices>button{padding:7px 4px;white-space:nowrap}
+.lp-timing-inline-custom{display:flex;align-items:center;justify-content:center;gap:2px;padding:0 5px;background:#252525;color:#ccc;border:1px solid transparent;min-width:0}
+.lp-timing-inline-custom.selected{border-color:#87cefa;background:#223640;color:#fff}
+.lp-timing-inline-custom:focus-within{outline:1px solid #87cefa}
+.lp-timing-inline-custom input{min-width:0;width:100%;font:inherit;font-size:12px;text-align:center;background:transparent;border:none;color:inherit;outline:none;padding:5px 0}
+.lp-timing-inline-custom input::placeholder{color:#aaa;opacity:1}
+.lp-timing-inline-custom span{font-size:11px;flex:none}
+.lp-editorial-status{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:78px}
+.lp-editorial-status-copy{display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;flex:1}
+.lp-editorial-status-copy strong{font-size:13px;overflow-wrap:anywhere}
+.lp-editorial-status-copy>span{font-size:12px;color:#aaa;overflow-wrap:anywhere}
+.lp-editorial-status-copy .lp-editorial-empty{color:#ddd;font-size:13px}
+.lp-editorial-quick-hide{flex:none;color:#ef5350}
+.lp-editorial-quick-hide:disabled{visibility:hidden}
+.lp-editorial-row{display:grid!important;grid-template-columns:minmax(0,1fr) 154px;align-items:center;gap:10px!important;min-height:70px;padding-top:7px!important;padding-bottom:7px!important}
+.lp-editorial-row .lp-library-text{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:50px}
+.lp-editorial-row .lp-row-actions{width:154px;justify-content:flex-end;gap:3px}
+.lp-editorial-row .lp-row-actions .lp-btn{width:75px;min-width:75px}
+.lp-editorial-row .lp-inline-editorial-fields{display:grid;grid-template-rows:22px 22px;gap:3px;min-height:50px;align-content:center}
+.lp-editorial-row .lp-inline-editorial-fields input{height:22px;line-height:20px;border:0;border-bottom:1px solid #444;background:transparent;padding:0 3px;outline:none;min-width:0;font-size:13px}
+.lp-editorial-row .lp-inline-editorial-fields input:last-child{font-size:12px;color:#aaa}
+.lp-editorial-row .lp-inline-editorial-fields input:focus{border-bottom-color:#87cefa;color:#fff}
+.lp-editorial-row .lp-row-actions:has(.lp-icon-action:not(.lp-delete):first-child:nth-last-child(2)){justify-content:flex-end}
+@media(max-width:760px){
+  .lp-ticker-row{grid-template-columns:20px minmax(0,1fr) 82px}
+  .lp-ticker-row .lp-row-actions{width:82px}
+  .lp-editorial-row{grid-template-columns:minmax(0,1fr) 154px;flex-wrap:nowrap!important}
+  .lp-editorial-row .lp-row-actions{width:154px}
+}
+@media(max-width:490px){
+  .lp-timing-choices{width:100%;gap:4px}
+  .lp-editorial-row{grid-template-columns:minmax(0,1fr) 118px;gap:4px!important;padding-left:6px!important;padding-right:6px!important}
+  .lp-editorial-row .lp-row-actions{width:118px;gap:0}
+  .lp-editorial-row .lp-row-actions .lp-btn{width:54px;min-width:54px;font-size:11px;padding:4px}
+  .lp-editorial-row .lp-icon-action{width:32px;height:36px}
+}
