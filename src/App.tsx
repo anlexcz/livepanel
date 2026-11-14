@@ -170,7 +170,7 @@ function Directing() {
   </div>;
 }
 function DemoApplication({ production = false }: { production?: boolean }) {
-  return <Shell>{section => {
+  return <Shell production={production}>{section => {
     if (section === 'live') return production ? <ProductionLive/> : <Directing/>;
     if (section === 'intro' || section === 'break' || section === 'outro') return <SceneEditor key={section} kind={section}/>;
     if (section === 'archive') return <ArchivePage/>;
