@@ -40,10 +40,10 @@ test('FEATURED timeout is committed and broadcast once, without a new command ro
   assert.equal(active.timer,null);
   processor.execute(cmd('runtime-0001','session.start',{streamId:'stream_1'}));
   processor.execute(cmd('runtime-0002','featured.show',{messageId:'msg_1',expiresAtMs:2000}));
-  assert.equal(active.timer?.delay,1000);
+  assert.equal((active.timer as FakeTimer|null)?.delay,1000);
   assert.equal(store.read().revision,2);
   advance(1000);
-  const callback=active.timer!.callback;
+  const callback=(active.timer as FakeTimer).callback;
   callback();
   assert.equal(store.read().state.featured.messageId,null);
   assert.equal(store.read().revision,3);
