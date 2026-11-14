@@ -5,7 +5,7 @@ import { createApp } from './app.js';
 async function main(): Promise<void> {
   const config = loadConfig();
   const db = openDatabase(config.databasePath);
-  const app = createApp(db, config.logLevel);
+  const app = createApp(db, config.logLevel, {devSockets:config.devSockets});
   let shuttingDown = false;
   async function shutdown(): Promise<void> {
     if (shuttingDown) return;
@@ -28,7 +28,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  // Do not log environment values or credentials.
   console.error('Backend initialization failed:', error instanceof Error ? error.message : 'unknown error');
   process.exitCode = 1;
 });

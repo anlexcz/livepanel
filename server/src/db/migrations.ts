@@ -13,6 +13,14 @@ const migrations: Migration[] = [
       updated_at_ms INTEGER NOT NULL CHECK (updated_at_ms >= 0)
     ) STRICT;
   ` },
+  { id: '003_command_deduplication', sql: `
+    CREATE TABLE production_commands (
+      command_id TEXT PRIMARY KEY,
+      request_hash TEXT NOT NULL,
+      result_json TEXT NOT NULL CHECK (json_valid(result_json)),
+      created_at_ms INTEGER NOT NULL CHECK (created_at_ms >= 0)
+    ) STRICT;
+  ` },
 ];
 
 export function migrate(db: Database.Database): void {

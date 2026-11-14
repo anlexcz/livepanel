@@ -1,7 +1,12 @@
 import Fastify from 'fastify';
 import type Database from 'better-sqlite3';
+import { ProductionStore } from './production/store.js';
+import { CommandProcessor } from './communication/processor.js';
+import { registerDevSockets } from './communication/socket.js';
 
-export function createApp(db: Database.Database, logLevel = 'info') {
+export type AppOptions = { devSockets?: boolean };
+
+export function createApp(db: Database.Database, logLevel = 'info', options: AppOptions = {}) {
   const app = Fastify({
     logger: {
       level: logLevel,
@@ -19,6 +24,11 @@ export function createApp(db: Database.Database, logLevel = 'info') {
       return { status: 'unavailable', service: 'metrobus-livepanel' };
     }
   });
+  // No public mutation route. Operator channel will require session authentication.
+  if (options.devSockets) {
+    const store = new ProductionStore(db);
+    registerDevSockets(app,store,new CommandProcessor(db,store));
+  }
 
   app.setNotFoundHandler((_request, reply) => {
     reply.code(404).send({ error: 'not_found' });
