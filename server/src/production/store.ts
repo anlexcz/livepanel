@@ -69,13 +69,16 @@ export class ProductionStore {
       validateProductionState(proposed.state);
       const nextStreamId = proposed.streamId === undefined ? current.streamId : proposed.streamId;
       validateStreamId(nextStreamId);
+      if (nextStreamId === null && JSON.stringify(proposed.state) !== JSON.stringify(initialProductionState())) {
+        throw new Error('Inactive stream must have empty Production State');
+      }
       const now = this.clock();
       assertTime(now);
       if (current.revision >= Number.MAX_SAFE_INTEGER) throw new Error('Production State revision exhausted');
       const changed = this.db.prepare(`
         UPDATE production_state SET stream_id = ?, revision = ?, state_json = ?, updated_at_ms = ?
         WHERE id = 1 AND revision = ?
-      `).run(nextStreamId, current.revision + 1, JSON.stringify(proposed.state), now, current.revision);
+      `).run(nextStreamId, current.revision + 1, JSON.stringify(reconcileExpired(proposed.state, now)), now, current.revision);
       if (changed.changes !== 1) throw new RevisionConflictError();
       return this.read();
     });
