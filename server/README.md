@@ -6,6 +6,7 @@ From the repository root:
 
 ```sh
 npm install
+npm install --prefix server
 npm run backend:build
 npm run backend:start
 # GET http://127.0.0.1:3100/health

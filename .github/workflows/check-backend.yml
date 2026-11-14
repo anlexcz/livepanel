@@ -15,6 +15,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-audit --no-fund
+      - run: npm install --prefix server --no-audit --no-fund
       - run: npm run backend:build
       - run: npm run backend:test
       - run: npm run test
