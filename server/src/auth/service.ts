@@ -9,6 +9,11 @@ type UserRow = { id:number; username:string; password_hash:string; shared:number
 type SessionRow = { id:string; user_id:number; username:string; shared:number; active:number; expires_at_ms:number; revoked_at_ms:number|null };
 const passwordOptions = { type: argon2.argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 } as const;
 const tokenDigest = (token:string) => createHash('sha256').update(token).digest('hex');
+function validPassword(password:unknown):password is string {
+  return typeof password==='string' && password.length>=12 && password.length<=256;
+}
+export type ManagedUser = {id:number;username:string;shared:boolean;active:boolean;createdAtMs:number};
+
 let dummyHashPromise:Promise<string>|undefined;
 
 export class AuthService {
@@ -17,7 +22,7 @@ export class AuthService {
   /** Operator provisioning is internal only; never exposed as public registration. */
   async createUser(username:string,password:string,shared=false):Promise<number> {
     if (!/^[A-Za-z0-9._-]{3,48}$/.test(username) || typeof password !== 'string' ||
-      password.length < 12 || password.length > 256) throw new Error('Invalid account credentials');
+      !validPassword(password)) throw new Error('Invalid account credentials');
     const hash = await argon2.hash(password,passwordOptions);
     const result = this.db.prepare('INSERT INTO users(username,password_hash,shared,created_at_ms) VALUES(?,?,?,?)')
       .run(username,hash,shared?1:0,this.clock());
@@ -69,6 +74,64 @@ export class AuthService {
       ORDER BY created_at_ms DESC
     `).all(actor.id,this.clock()) as Array<{id:string;createdAtMs:number;expiresAtMs:number}>;
   }
+  /** List accounts without password hashes. This is NOT exposed to ordinary operator HTTP clients. */
+  listUsers():ManagedUser[] {
+    const rows=this.db.prepare('SELECT id,username,shared,active,created_at_ms FROM users ORDER BY id')
+      .all() as Array<{id:number;username:string;shared:number;active:number;created_at_ms:number}>;
+    return rows.map(row=>({id:row.id,username:row.username,shared:row.shared===1,
+      active:row.active===1,createdAtMs:row.created_at_ms}));
+  }
+
+  /** Trusted, server-side administrative operation. Always revoke sessions on reset. */
+  async resetPassword(userId:number,newPassword:string):Promise<boolean> {
+    if(!Number.isSafeInteger(userId)||userId<1||!validPassword(newPassword))
+      throw new Error('Invalid account credentials');
+    const hash=await argon2.hash(newPassword,passwordOptions);
+    const now=this.clock();
+    return this.db.transaction(()=>{
+      const updated=this.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(hash,userId);
+      if(updated.changes!==1) return false;
+      this.db.prepare('UPDATE login_sessions SET revoked_at_ms=? WHERE user_id=? AND revoked_at_ms IS NULL')
+        .run(now,userId);
+      return true;
+    })();
+  }
+
+  /** Trusted, server-side administrative operation. Deactivation revokes every session. */
+  setActive(userId:number,active:boolean):boolean {
+    if(!Number.isSafeInteger(userId)||userId<1||typeof active!=='boolean')
+      throw new Error('Invalid account state');
+    const now=this.clock();
+    return this.db.transaction(()=>{
+      const updated=this.db.prepare('UPDATE users SET active=? WHERE id=?').run(active?1:0,userId);
+      if(updated.changes!==1) return false;
+      if(!active) this.db.prepare('UPDATE login_sessions SET revoked_at_ms=? WHERE user_id=? AND revoked_at_ms IS NULL')
+        .run(now,userId);
+      return true;
+    })();
+  }
+
+  /** Self-service password change: current password required and all device sessions invalidated. */
+  async changeOwnPassword(actor:Operator,currentPassword:string,newPassword:string):Promise<boolean> {
+    if(typeof currentPassword!=='string'||currentPassword.length>256||!validPassword(newPassword))
+      return false;
+    const row=this.db.prepare('SELECT password_hash,active FROM users WHERE id=?')
+      .get(actor.id) as {password_hash:string;active:number}|undefined;
+    if(!row || !row.active) return false;
+    if(!await argon2.verify(row.password_hash,currentPassword).catch(()=>false)) return false;
+    const hash=await argon2.hash(newPassword,passwordOptions);
+    const now=this.clock();
+    return this.db.transaction(()=>{
+      // Reject racing password changes rather than overwriting a newer password.
+      const updated=this.db.prepare('UPDATE users SET password_hash=? WHERE id=? AND password_hash=? AND active=1')
+        .run(hash,actor.id,row.password_hash);
+      if(updated.changes!==1) return false;
+      this.db.prepare('UPDATE login_sessions SET revoked_at_ms=? WHERE user_id=? AND revoked_at_ms IS NULL')
+        .run(now,actor.id);
+      return true;
+    })();
+  }
+
 }
 
 export function cookieToken(cookieHeader:string|undefined):string|undefined {
