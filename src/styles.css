@@ -233,3 +233,14 @@ body{background:var(--lp-bg)}
 .rail-link:hover .scene-nav-mark,.nav-link:hover .scene-nav-mark{color:#fff;border-color:#87cefa}
 .rail-link.active .scene-nav-mark,.nav-link.active .scene-nav-mark{background:#263a46;border-color:#87cefa;color:#87cefa}
 .nav-drawer .scene-nav-mark{margin-right:0}
+
+/* Scene navigation is one parent item in collapsed rail; children only in expanded rail. */
+.scene-group-trigger.active{color:#87cefa}
+.scene-group-trigger .rail-group-chevron{margin-left:auto;flex:none;color:#888;transition:transform 180ms}
+.scene-subnav{width:230px;padding:3px 10px 7px 49px;display:flex;flex-direction:column;gap:2px}
+.scene-subnav-link{display:flex;align-items:center;min-height:34px;width:100%;background:transparent;border:0;color:#c5c5c5;font-weight:500;font-size:12px;text-align:left;padding:6px 10px}
+.scene-subnav-link:hover,.scene-subnav-link:focus-visible{background:#252525;color:#fff}
+.scene-subnav-link.active{background:#252525;color:#87cefa;box-shadow:inset 2px 0 #87cefa}
+.scene-drawer-link{padding-left:42px;font-weight:500}
+.nav-group svg{flex:none;color:#87cefa}
+@media(prefers-reduced-motion:reduce){.scene-group-trigger .rail-group-chevron{transition:none}}
