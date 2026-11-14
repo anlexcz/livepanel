@@ -79,21 +79,22 @@ export class CommandProcessor {
       if (changedSnapshot && beforeSnapshot && result.ok) {
         const before: ProductionSnapshot = beforeSnapshot;
         const after: ProductionSnapshot = changedSnapshot;
-        const categories: Update['category'][] = [categoryFor(command.action)];
+        // Exactly one UPDATE per persisted revision. If a command also expires
+        // another category, send the full session state to avoid revision gaps.
+        let category: Update['category'] = categoryFor(command.action);
         if (before.streamId !== after.streamId) {
-          if (!categories.includes('session')) categories.push('session');
-        } else {
-          for (const category of ['chat','featured','editorial'] as const) {
-            if (JSON.stringify(before.state[category]) !== JSON.stringify(after.state[category])) {
-              if (!categories.includes(category)) categories.push(category);
+          category = 'session';
+        } else if (category !== 'session') {
+          for (const part of ['chat','featured','editorial','event','ticker'] as const) {
+            if (part !== category && JSON.stringify(before.state[part]) !== JSON.stringify(after.state[part])) {
+              category = 'session';
+              break;
             }
           }
         }
-        for (const category of categories) {
-          const update = updateFromSnapshot(category, after);
-          for (const subscriber of this.subscribers) {
-            try { subscriber(update); } catch { /* commit has already succeeded */ }
-          }
+        const update = updateFromSnapshot(category, after);
+        for (const subscriber of this.subscribers) {
+          try { subscriber(update); } catch { /* commit has already succeeded */ }
         }
       }
       return result;
