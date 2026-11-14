@@ -114,3 +114,18 @@ test('server rejection and disconnect fail in-flight command without optimistic 
     client.stop();
   }finally{restore();}
 });
+
+test('EVENT UPDATE keeps the client synchronized with operator pause/resume',()=>{
+  const restore=mockSockets();
+  try {
+    const client=new ProductionClient('wss://example.test/ws/operator');
+    client.start();
+    const ws=Socket.instances.at(-1);
+    ws.emit(snap(2,'synthetic'));
+    const event={queue:['event_01'],paused:true};
+    ws.emit({type:'UPDATE',revision:3,category:'event',value:event});
+    assert.equal(client.current().status,'connected');
+    assert.deepEqual(client.current().snapshot.state.event,event);
+    client.stop();
+  }finally{restore();}
+});

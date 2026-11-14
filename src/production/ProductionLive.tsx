@@ -82,9 +82,15 @@ export default function ProductionLive() {
       </section>
       <section className="lp-production-panel">
         <h2>EVENT / TICKER</h2>
+        <div className="lp-production-actions">
+          <button type="button" disabled={!active||!!snapshot?.state.event.paused}
+            onClick={()=>void action('event.pause')}>Pozastavit EVENT</button>
+          <button type="button" disabled={!active||!snapshot?.state.event.paused}
+            onClick={()=>void action('event.resume')}>Povolit EVENT</button>
+        </div>
         <p>EVENT: {snapshot?.state.event.paused?'Pozastaven':'Nepozastaven'} · fronta {snapshot?.state.event.queue.length??'—'}</p>
         <p>TICKER: {snapshot?.state.ticker.status??'—'}</p>
-        <p className="lp-production-note">Zatím pouze čtení. Produkční automatika není implementována.</p>
+        <p className="lp-production-note">EVENT lze ručně pozastavit či povolit. Fronta se zatím automaticky nepřehrává. TICKER zůstává pouze pro čtení.</p>
       </section>
     </div>
   </div>;

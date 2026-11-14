@@ -6,6 +6,7 @@ import { registerDevSockets } from './communication/socket.js';
 import { registerOperatorSocket } from './communication/operatorSocket.js';
 import { AuthService } from './auth/service.js';
 import { registerAuthHttp } from './auth/http.js';
+import { ProductionRuntime } from './production/runtime.js';
 
 export type AppOptions = { devSockets?:boolean; publicOrigin?:string };
 
@@ -23,6 +24,9 @@ export function createApp(db:Database.Database,logLevel='info',options:AppOption
   if(options.devSockets&&options.publicOrigin) throw new Error('Unsafe WebSocket configuration');
   const store=new ProductionStore(db);
   const processor=new CommandProcessor(db,store);
+  const runtime=new ProductionRuntime(store,processor);
+  runtime.start();
+  app.addHook('onClose',async()=>runtime.stop());
   if(options.devSockets) registerDevSockets(app,store,processor);
   if(options.publicOrigin) {
     const auth=new AuthService(db);

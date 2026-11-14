@@ -4,7 +4,8 @@ export type Action =
   | 'session.start' | 'session.stop'
   | 'chat.setMode'
   | 'featured.show' | 'featured.hide'
-  | 'editorial.show' | 'editorial.hide';
+  | 'editorial.show' | 'editorial.hide'
+  | 'event.pause' | 'event.resume';
 
 export type Command = {
   type: 'COMMAND';
@@ -21,10 +22,10 @@ export type Result = {
   revision: number;
   error?: 'INVALID_COMMAND' | 'REVISION_CONFLICT' | 'INVALID_STATE' | 'COMMAND_ID_REUSED' | 'PERSISTENCE_ERROR';
 };
-export type Update = { type: 'UPDATE'; revision: number; category: 'session' | 'chat' | 'featured' | 'editorial'; value: unknown };
+export type Update = { type: 'UPDATE'; revision: number; category: 'session' | 'chat' | 'featured' | 'editorial' | 'event'; value: unknown };
 export type Snapshot = { type: 'SNAPSHOT'; revision: number; state: ProductionSnapshot };
 
-const actions: Action[] = ['session.start','session.stop','chat.setMode','featured.show','featured.hide','editorial.show','editorial.hide'];
+const actions: Action[] = ['session.start','session.stop','chat.setMode','featured.show','featured.hide','editorial.show','editorial.hide','event.pause','event.resume'];
 const fields = (value: Record<string, unknown>, expected: string[]): boolean =>
   Object.keys(value).sort().join(',') === [...expected].sort().join(',');
 
@@ -66,6 +67,7 @@ export function categoryFor(action: Action): Update['category'] {
   if (action.startsWith('session.')) return 'session';
   if (action.startsWith('chat.')) return 'chat';
   if (action.startsWith('featured.')) return 'featured';
+  if (action.startsWith('event.')) return 'event';
   return 'editorial';
 }
 
