@@ -13,6 +13,7 @@ export function loadConfig(env:NodeJS.ProcessEnv=process.env):ServerConfig {
   const publicOrigin=env.LIVEPANEL_PUBLIC_ORIGIN??null;
   if(!/^(127\.0\.0\.1|localhost|::1)$/.test(host)&&env.LIVEPANEL_ALLOW_REMOTE!=='true')
     throw new Error('Non-loopback listening requires LIVEPANEL_ALLOW_REMOTE=true (only behind a secured proxy)');
+  if(devSockets&&publicOrigin) throw new Error('Development WebSocket cannot coexist with authenticated operator transport');
   if(devSockets&&!/^(127\.0\.0\.1|localhost|::1)$/.test(host))
     throw new Error('Development WebSocket cannot be enabled on a non-loopback host');
   if(!Number.isInteger(port)||port<1||port>65535) throw new Error('Invalid LIVEPANEL_PORT');
