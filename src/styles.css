@@ -376,3 +376,30 @@ body{background:var(--lp-bg)}
  .lp-event-controls .lp-button-row>.lp-btn{min-width:0!important}
  .lp-event-tabs button{min-height:40px}
 }
+
+/* LivePanel motion system: functional microinteractions only; never delay server actions.
+   110ms hover, 150ms tab change, 190ms expand, 180ms state entry, 250ms save. */
+:root{--lp-motion-fast:110ms;--lp-motion-tab:150ms;--lp-motion-expand:190ms;--lp-motion-state:180ms;--lp-motion-save:250ms}
+.director-panel{overflow:hidden}
+.lp-module-disclosure{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows var(--lp-motion-expand) ease,opacity var(--lp-motion-expand) ease,visibility var(--lp-motion-expand);min-width:0}
+.lp-module-disclosure.is-open{grid-template-rows:1fr;opacity:1;visibility:visible}
+.lp-module-disclosure-inner{min-height:0;min-width:0;overflow:hidden}
+.lp-collapse-chevron{flex:none;transition:transform var(--lp-motion-expand) ease}
+.lp-collapse-chevron.is-open{transform:rotate(180deg)}
+.lp-motion-tabs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);position:relative}
+.lp-motion-tabs button{position:relative;min-width:0;transition:background-color var(--lp-motion-fast) ease,color var(--lp-motion-fast) ease;box-shadow:none!important}
+.lp-motion-tabs::after{content:"";position:absolute;left:4px;bottom:4px;width:calc((100% - 8px)/2);height:2px;background:#87cefa;pointer-events:none;transform:translateX(0);transition:transform var(--lp-motion-tab) ease-in-out}
+.lp-motion-tabs[data-tab="shown"]::after,.lp-motion-tabs[data-tab="history"]::after{transform:translateX(100%)}
+.lp-tab-content{animation:lp-tab-reveal var(--lp-motion-tab) ease-out both}
+.lp-content-change{animation:lp-status-reveal var(--lp-motion-state) ease-out both}
+.lp-editorial-status-copy{animation:lp-status-reveal var(--lp-motion-state) ease-out both}
+.lp-save-flash{animation:lp-save-feedback var(--lp-motion-save) ease-out both}
+.lp-btn,.small-button,.lp-icon-action,.panel-toggle,.lp-inline-disclosure,.lp-timing-choices button,.lp-animated-disclosure .compact-item,.compact-item,.message-actions button{transition:background-color var(--lp-motion-fast) ease,color var(--lp-motion-fast) ease,box-shadow var(--lp-motion-fast) ease,opacity var(--lp-motion-fast) ease}
+.lp-btn:active:not(:disabled),.small-button:active:not(:disabled),.lp-icon-action:active:not(:disabled){filter:brightness(1.13)}
+@keyframes lp-tab-reveal{from{opacity:.55;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@keyframes lp-status-reveal{from{opacity:.55;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
+@keyframes lp-save-feedback{0%{box-shadow:inset 3px 0 #4caf50;background:#26372e}100%{box-shadow:inset 0 0 transparent;background:transparent}}
+@media(prefers-reduced-motion:reduce){
+ .lp-module-disclosure,.lp-collapse-chevron,.lp-motion-tabs button,.lp-motion-tabs::after,.lp-btn,.small-button,.lp-icon-action,.panel-toggle,.lp-inline-disclosure,.lp-timing-choices button,.compact-item,.message-actions button{transition:none!important}
+ .lp-tab-content,.lp-content-change,.lp-editorial-status-copy,.lp-save-flash{animation:none!important}
+}
