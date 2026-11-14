@@ -149,8 +149,8 @@ export default function DirectingPanels({messages,favorites,shownMessages,featur
     </Module>
     </div>
     <div className="directing-content-column">
-    <Module name="TICKER" status={tickerRunning?'Testovací dávka běží':'Automatika zastavena'} collapsed={collapsed.TICKER} onToggle={()=>toggle('TICKER')}>
-      <div className="panel-state"><Status type={tickerRunning?'good':'neutral'}>{tickerRunning?'Dávka běží (demo)':'Automatika neběží'}</Status><p>{tickerCurrent?tickerItems.find(t=>t.id===tickerCurrent)?.text:'Žádná aktuálně vysílaná zpráva.'}</p></div>
+    <Module name="TICKER" status={tickerPhase==='idle'?'Automatika zastavena':tickerRunning?'Testovací dávka běží':'Pozastaveno'} collapsed={collapsed.TICKER} onToggle={()=>toggle('TICKER')}>
+      <div className="panel-state"><Status type={tickerRunning?'good':tickerPhase==='idle'?'neutral':'warn'}>{tickerPhase==='idle'?'Automatika neběží':tickerRunning?'Dávka běží (demo)':'Pozastaveno (demo)'}</Status><p>{tickerCurrent?tickerItems.find(t=>t.id===tickerCurrent)?.text:'Žádná aktuálně vysílaná zpráva.'}</p></div>
       <Buttons>
         <PanelButton primary onClick={sendTicker} disabled={!tickerItems.some(t=>t.enabled)}><Play size={15}/> {tickerPhase==='idle'?'Spustit dávku':tickerPhase==='between'?'Spustit nyní':'Další zpráva'}</PanelButton>
         <PanelButton onClick={pauseTicker} disabled={tickerPhase==='idle'}>{tickerRunning?<Pause size={15}/>:<Play size={15}/>} {tickerRunning?'Pozastavit':'Pokračovat'}</PanelButton>
