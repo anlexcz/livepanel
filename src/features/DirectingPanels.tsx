@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, ChevronDown, ChevronUp, Clock3, EyeOff, List, Pause, Pencil, Play, Plus, RotateCcw, SkipForward, Star, Trash2, Type, X, Zap } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Clock3, EyeOff, List, Pause, Pencil, Play, Plus, SkipForward, Star, Trash2, Type, X, Zap } from 'lucide-react';
 import { Buttons, Empty, PanelButton, Status } from '../components/Ui';
 import { initialEditorial, initialEvents, initialTicker, type EditorialItem, type EventItem, type TickerItem } from '../mock/directing';
 import type { Category, Message } from '../mock/data';
